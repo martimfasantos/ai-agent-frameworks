@@ -503,3 +503,39 @@ All contributions are welcome! If you have suggestions for new examples, framewo
 - All modules use `uv` for dependency management (`pyproject.toml` + `uv.lock`). **Check each module's `README.md` for installation and usage.**
 - Install dependencies before running examples.
 - Example `.env.example` files are provided where needed for API keys and settings.
+
+## ❓ FAQ
+
+### What is this repository?
+This repository provides a hands-on comparison of modern AI agent and multi-agent frameworks. Each framework is explored through practical examples, showcasing core functionality, unique features, and use cases.
+
+### Which frameworks are included?
+The repository includes examples for: AG2, Agno, AutoGen, CrewAI, LangGraph, LlamaIndex, Microsoft Agent Framework, OpenAI Agents SDK, Pydantic-AI, Smolagents, Strands Agents SDK, and more.
+
+### How do I get started?
+1. Choose a framework from the list
+2. Navigate to the relevant folder
+3. Run `uv sync` to install dependencies
+4. Copy `.env.example` to `.env` and fill in your API keys
+5. Run examples with `uv run <filename>.py`
+
+### What is `uv` and why is it used?
+`uv` is a fast Python package installer and resolver. It replaces `pip` and `virtualenv` for faster dependency management. All modules use `uv` with `pyproject.toml` and `uv.lock` files.
+
+### How do I compare frameworks?
+The `study-agents-differences/` folder contains comprehensive comparison scripts that measure response time, token usage, and tool utilization across frameworks. Run `streamlit run agent-ui.py` for an interactive comparison UI.
+
+### Can I contribute?
+Yes! All contributions are welcome. Please open an issue or submit a pull request with suggestions for new examples, frameworks to add, or improvements to existing content.
+
+### How do I add a new framework?
+1. Create a new folder with the framework name
+2. Add a `pyproject.toml` with dependencies
+3. Add a `.env.example` file for API keys
+4. Create practical examples following the existing structure
+5. Add a `README.md` with setup and usage instructions
+
+### Where can I get help?
+- Open an [issue](https://github.com/martimfasantos/ai-agents-frameworks/issues) for bugs or questions
+- Check each module's `README.md` for specific instructions
+- Review the comparison scripts in `study-agents-differences/`
