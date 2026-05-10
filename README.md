@@ -74,7 +74,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/agno.svg" alt="Agno" width="68" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>2.5.17</code></td>
+      <td><code>2.6.5</code></td>
       <td>
           <a href="https://docs.agno.com/introduction">
             <picture>
@@ -425,7 +425,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/strands-amazon-sdk.svg" alt="Strands Agents SDK" width="120" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>1.35.0</code></td>
+      <td><code>1.39.0</code></td>
       <td>
           <a href="https://strandsagents.com/latest/">
             <picture>
