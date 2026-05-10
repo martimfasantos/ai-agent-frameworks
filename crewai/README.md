@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/crewAIInc/crewAI
 - Documentation: https://docs.crewai.com/
-- Version: **1.14.2**
+- Version: **1.14.4**
 
 ## About CrewAI
 
@@ -22,6 +22,7 @@ Key features:
 - **Execution hooks** - `@before_llm_call`, `@after_llm_call`, `@before_tool_call`, `@after_tool_call`
 - **Multimodal agents** - Image and file processing with `multimodal=True`
 - **Human feedback** - `@human_feedback` decorator for human-in-the-loop flows
+- **Checkpointing & forking** - Save execution state, resume after failures, fork for "what if" exploration
 
 ## Setup
 
@@ -71,6 +72,7 @@ uv run python 19_flows.py
 uv run python 20_flows_with_agents.py
 uv run python 21_human_feedback_in_flows.py
 uv run python 22_crew_simplification.py
+uv run python 23_checkpointing.py
 ```
 
 ## Examples
@@ -100,9 +102,10 @@ uv run python 22_crew_simplification.py
 | 20 | `20_flows_with_agents.py` | Flows with integrated agents and async |
 | 21 | `21_human_feedback_in_flows.py` | @human_feedback decorator in flows |
 | 22 | `22_crew_simplification.py` | @CrewBase decorators, YAML config |
+| 23 | `23_checkpointing.py` | Checkpointing, resume, fork, CheckpointConfig |
 
 ## Key dependencies
 
-- `crewai[tools]>=1.14.2` - CrewAI framework with built-in tools
+- `crewai[tools]>=1.14.4` - CrewAI framework with built-in tools
 - `pydantic>=2.11.7` - Data validation and structured outputs
 - `pydantic-settings>=2.10.1` - Settings management from .env

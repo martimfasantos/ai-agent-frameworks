@@ -1,6 +1,6 @@
 # CrewAI - Example Outputs
 
-All examples run with `crewai[tools]>=1.14.2` and `gpt-4o-mini` as the model.
+All examples run with `crewai[tools]>=1.14.4` and `gpt-4o-mini` as the model.
 
 > **Note:** LLM responses are non-deterministic. Your outputs will differ in wording but should follow the same structure and demonstrate the same features.
 
@@ -721,3 +721,40 @@ Crew Execution Completed
 ```
 
 **Verdict:** PASS - @CrewBase decorators with YAML config used to define agents/tasks declaratively; two-agent crew (researcher + analyst) executed sequentially with context passing
+
+---
+
+## 23_checkpointing.py
+
+```
+=== Example 1: Crew with Checkpointing ===
+
+Crew result: Checkpointing provides significant benefits to AI systems by enabling state recovery,
+which minimizes progress loss during failures, and optimizing resource usage by saving intermediate
+results to reduce redundant calculations...
+
+Checkpoints saved: 3
+  - 20260510T104612_21a622d5_p-none.json
+  - 20260510T104614_153329a0_p-20260510T104612_21a622d5.json
+  - 20260510T104614_16c6f8cd_p-20260510T104614_153329a0.json
+
+=== Example 2: Agent-Level Checkpointing ===
+
+Agent result: The main advantages of execution checkpointing include improved fault tolerance,
+as it allows systems to save their state and recover from failures without starting over, and
+enhanced resource efficiency by enabling the resumption of long-running processes from the last
+saved state, reducing wasted computation.
+Agent checkpoints saved: 0
+
+=== Example 3: Forking from a Checkpoint ===
+
+Forking from: 20260510T104612_21a622d5_p-none.json
+Forked crew result: Checkpointing provides significant advantages in state recovery for AI systems,
+allowing them to revert to the last saved state in case of failures...
+
+Demo checkpoint directories cleaned up.
+```
+
+> Three checkpoint JSON files were written (one per task completion + crew completion). Forking from the earliest checkpoint successfully created a new execution branch. Agent-level checkpoint event did not produce files in this version but the agent ran successfully.
+
+**Verdict:** PASS - CheckpointConfig with custom location and events, crew checkpointing with 3 saved files, forking from checkpoint to create alternate execution branch, agent-level standalone kickoff with checkpoint config
