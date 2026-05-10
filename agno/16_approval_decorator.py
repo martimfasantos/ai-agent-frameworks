@@ -25,7 +25,7 @@ composable decorator that supports both required (blocking)
 and audit (non-blocking) approval types.
 
 For more details, visit:
-https://docs.agno.com/agents/human-in-the-loop
+https://docs.agno.com/runtime/human-approval
 -------------------------------------------------------
 """
 
