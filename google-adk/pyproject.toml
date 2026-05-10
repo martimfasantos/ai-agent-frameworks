@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Google ADK framework examples"
 requires-python = ">=3.12"
 dependencies = [
-    "google-adk[eval]>=1.26.0",
+    "google-adk[eval]>=1.33.0",
     "litellm>=1.82.1",
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
