@@ -29,7 +29,7 @@ both span processors and metric readers using OTelHooks, then
 inspect the captured telemetry after an agent run.
 
 For more details, visit:
-https://google.github.io/adk-docs/runtime/telemetry/
+https://adk.dev/observability/traces/
 -------------------------------------------------------
 """
 
