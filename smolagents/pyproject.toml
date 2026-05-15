@@ -11,6 +11,6 @@ dependencies = [
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
     "python-dotenv>=1.2.2",
-    "smolagents[mcp,toolkit]>=1.24.0",
+    "smolagents[mcp,toolkit]>=1.25.0",
     "wikipedia-api>=0.11.0",
 ]

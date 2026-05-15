@@ -397,7 +397,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
         </picture>
     <strong style="vertical-align: middle; font-size: 1.2em;">smolagents</strong>
       </td>
-      <td><code>1.24.0</code></td>
+      <td><code>1.25.0</code></td>
       <td>
           <a href="https://huggingface.co/docs/smolagents/en/index">
             <picture>
