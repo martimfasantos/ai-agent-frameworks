@@ -2,6 +2,7 @@
 
 - Repo: https://github.com/agno-agi/agno
 - Documentation: https://docs.agno.com
+- Version: **2.6.5**
 
 ## Agno Examples
 
@@ -58,6 +59,7 @@ cp .env.example .env
 | 13 | `13_session_state.py` | Session State | Stateful tools with `session_state` |
 | 14 | `14_mcp_tools.py` | MCP Tools | External tool servers via Model Context Protocol |
 | 15 | `15_hooks.py` | Hooks | Pre-hooks and post-hooks for logging and transforms |
+| 16 | `16_approval_decorator.py` | Approval | `@approval` decorator for tool-level HITL gating |
 
 ### Running examples
 
