@@ -503,3 +503,116 @@ All contributions are welcome! If you have suggestions for new examples, framewo
 - All modules use `uv` for dependency management (`pyproject.toml` + `uv.lock`). **Check each module's `README.md` for installation and usage.**
 - Install dependencies before running examples.
 - Example `.env.example` files are provided where needed for API keys and settings.
+
+---
+
+## ❓ FAQ
+
+### What is this repository?
+
+This repository provides a hands-on comparison of modern AI agent and multi-agent frameworks. Each framework is explored through practical examples, showcasing core functionality, unique features, and use cases.
+
+### Which frameworks are included?
+
+14 major AI agent frameworks:
+- **AG2** (v0.11.5) — Multi-agent conversation framework
+- **Agno** (v2.6.5) — Lightweight agent framework
+- **Autogen** (v0.7.5) — Microsoft's multi-agent framework
+- **Claude Agent SDK** (v0.1.52) — Anthropic's official agent SDK
+- **CrewAI** (v1.14.4) — Role-playing multi-agent framework
+- **Google ADK** (v1.31.0) — Google's Agent Development Kit
+- **LangChain** (v1.2.18) — LLM application framework
+- **LangGraph** (v0.2.68) — Stateful agent orchestration
+- **LlamaIndex** (v0.14.20) — Data framework for LLMs
+- **Microsoft Agent Framework** (v1.0.1) — Enterprise agent framework
+- **OpenAI Agents SDK** (v0.17.0) — OpenAI's official agent SDK
+- **Pydantic-AI** (v1.84.0) — Type-safe agent framework
+- **smolagents** (v1.25.0) — HuggingFace's minimal agent framework
+- **Strands Agents SDK** (v1.39.0) — Amazon's agent SDK
+
+### How do I choose a framework?
+
+Consider your needs:
+- **Multi-agent collaboration**: AG2, Autogen, CrewAI, LangGraph
+- **Simplicity**: Agno, smolagents
+- **Enterprise/Production**: Google ADK, Microsoft Agent Framework, Strands Agents SDK
+- **Type safety**: Pydantic-AI
+- **Official SDKs**: Claude Agent SDK, OpenAI Agents SDK
+- **RAG/Data**: LlamaIndex, LangChain
+
+### How do I install dependencies?
+
+Each module uses `uv` for dependency management:
+```bash
+cd <framework-folder>
+uv sync
+```
+
+### How do I configure API keys?
+
+1. Copy `.env.example` to `.env` in each module
+2. Fill in your API keys (OpenAI, Anthropic, Google, etc.)
+3. Run examples with `uv run <filename>.py`
+
+### What is the study-agents-differences module?
+
+A comprehensive comparison toolkit including:
+- Unified agent interfaces for multiple frameworks
+- Performance benchmarks (response time, token usage, tool utilization)
+- Interactive Streamlit UI for real-time comparison
+
+Run: `streamlit run agent-ui.py` in `study-agents-differences/`
+
+### How do I run examples?
+
+```bash
+cd <framework-folder>
+uv sync
+uv run <example>.py
+```
+
+Check each module's `README.md` for specific instructions.
+
+### What protocols are supported?
+
+Examples demonstrate:
+- **A2A** (Agent-to-Agent Protocol)
+- **MCP** (Model Context Protocol)
+
+### Can I compare frameworks programmatically?
+
+Yes. Use the `study-agents-differences/` module:
+- Unified interfaces across frameworks
+- Benchmarks for common tasks
+- Detailed analysis and results
+
+### How can I contribute?
+
+- Add new framework examples
+- Improve existing examples
+- Enhance comparison tools
+- Submit issues and pull requests
+
+### Troubleshooting
+
+**Issue**: `uv sync` fails
+- Ensure `uv` is installed: `pip install uv` or `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Check Python version compatibility
+
+**Issue**: API key errors
+- Verify `.env` file is configured correctly
+- Ensure keys are valid and have sufficient quota
+
+**Issue**: Module import errors
+- Run `uv sync` to install dependencies
+- Check you're in the correct module directory
+
+**Issue**: Streamlit UI not working
+- Install Streamlit: `uv add streamlit`
+- Run from `study-agents-differences/` directory
+
+### Need more help?
+
+- Check each framework's official documentation (linked in table)
+- Open an issue on GitHub
+- Review the framework-specific `README.md` in each module
