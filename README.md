@@ -188,7 +188,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
         </picture>
     <strong style="vertical-align: middle; font-size: 1.2em;">Google ADK</strong>
       </td>
-      <td><code>1.33.0</code></td>
+      <td><code>2.1.0</code></td>
       <td>
           <a href="https://google.github.io/adk-docs/">
             <picture>
