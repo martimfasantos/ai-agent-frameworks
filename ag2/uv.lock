@@ -26,15 +26,9 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c9/03/58c92a44e7b94a42614880df2365f074969e47067c4c736e31e855aca2fd/a2a_sdk-1.0.2-py3-none-any.whl", hash = "sha256:4dbc083b6808ee28207ac6daad263360f87612c37b2d06f5521efb530318141c", size = 234302, upload-time = "2026-04-24T13:50:22.412Z" },
 ]
 
-[package.optional-dependencies]
-http-server = [
-    { name = "sse-starlette" },
-    { name = "starlette" },
-]
-
 [[package]]
 name = "ag2"
-version = "0.12.3"
+version = "0.13.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -47,14 +41,14 @@ dependencies = [
     { name = "termcolor" },
     { name = "tiktoken" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4f/9c/6add4a88368b23c6c7d8a01307e06de830d169033f9a4654e43519e71916/ag2-0.12.3.tar.gz", hash = "sha256:22bad945295b59a2679903f3cff39f661d1667acb656897f5cad722ff85496b7", size = 4274340, upload-time = "2026-05-06T05:01:03.428Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/06/d9/d7d0ec7e4875e70d85e24068ae4c1e04604af39146da585dc3ecfc9ee890/ag2-0.13.2.tar.gz", hash = "sha256:bfb6eb5e646a2ac9142256dcb7efdd442e337f616d00303f30856c04518445cf", size = 4682591, upload-time = "2026-05-29T01:00:59.722Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c8/ca/913eb677b2f446b243599d3ea0f0d59fd49edf639a8c092c181723152a4c/ag2-0.12.3-py3-none-any.whl", hash = "sha256:97d70b44498fb1840009d66f80629b2895cbc68f0d87078f282e75b683b5cc49", size = 1276279, upload-time = "2026-05-06T05:01:00.323Z" },
+    { url = "https://files.pythonhosted.org/packages/07/63/30c188f0a5ca1462663811dbf61e7c165062e67a1728e837f03ad9a571dc/ag2-0.13.2-py3-none-any.whl", hash = "sha256:9f4edf29704042c713a4667fbab8b911590146b0c831c26df32ff93a9592516c", size = 1613805, upload-time = "2026-05-29T01:00:57.646Z" },
 ]
 
 [package.optional-dependencies]
 a2a = [
-    { name = "a2a-sdk", extra = ["http-server"] },
+    { name = "a2a-sdk" },
 ]
 mcp = [
     { name = "mcp" },
@@ -611,7 +605,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "1.109.1"
+version = "2.38.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -623,9 +617,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c6/a1/a303104dc55fc546a3f6914c842d3da471c64eec92043aef8f652eb6c524/openai-1.109.1.tar.gz", hash = "sha256:d173ed8dbca665892a6db099b4a2dfac624f94d20a93f46eb0b56aae940ed869", size = 564133, upload-time = "2025-09-24T13:00:53.075Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8f/12/cfa322c5f5dd8fa21aab9a7a8e979e7a11123800f86ca8d82eb68a83d213/openai-2.38.0.tar.gz", hash = "sha256:798694c6cf74145541fda94325b6f8f72d8e1fd0262cc137c8d728177a6a4ce3", size = 772764, upload-time = "2026-05-21T21:23:42.105Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1d/2a/7dd3d207ec669cacc1f186fd856a0f61dbc255d24f6fdc1a6715d6051b0f/openai-1.109.1-py3-none-any.whl", hash = "sha256:6bcaf57086cf59159b8e27447e4e7dd019db5d29a438072fbd49c290c7e65315", size = 948627, upload-time = "2025-09-24T13:00:50.754Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/bf/ccff9be562e24207716d04ef9dc931c76aff0c89a7265da43e2104d7fe06/openai-2.38.0-py3-none-any.whl", hash = "sha256:ec6661c57b2dcc47414a767e6e3335c7ed3d19c9696999283a3c82e95c756a3c", size = 1344910, upload-time = "2026-05-21T21:23:39.636Z" },
 ]
 
 [[package]]

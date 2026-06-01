@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/ag2ai/ag2
 - Documentation: https://docs.ag2.ai/latest/
-- Version: **0.12.3**
+- Version: **0.13.2**
 
 ## About AG2
 
@@ -85,10 +85,12 @@ uv run python 15_beta_structured_output.py
 | 13 | `13_beta_tools.py` | Beta Agent tools, event history with tool call/result events |
 | 14 | `14_beta_observer.py` | `MemoryStream` event subscription, real-time event observation |
 | 15 | `15_beta_structured_output.py` | Beta Agent `response_schema`, Pydantic structured outputs |
+| 16 | `16_beta_middleware.py` | Beta Middleware for intercepting LLM calls and agent turns |
+| 17 | `17_beta_memory_stream.py` | MemoryStream for persistent conversation history across turns |
 
 ## Key dependencies
 
-- `ag2[openai,mcp,a2a]>=0.12.3` - AG2 framework with OpenAI, MCP, and A2A extras
+- `ag2[openai,mcp,a2a]>=0.13.2` - AG2 framework with OpenAI, MCP, and A2A extras
 - `mcp>=1.9.2` - Model Context Protocol SDK (for MCP server)
 - `pydantic-settings` - Settings management from .env
 - `uvicorn` - ASGI server for A2A examples
