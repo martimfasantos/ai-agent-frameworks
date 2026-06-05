@@ -2,6 +2,7 @@ import os
 import asyncio
 
 from google.adk import Agent
+from google.adk.artifacts import InMemoryArtifactService
 from google.adk.code_executors import UnsafeLocalCodeExecutor
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -55,6 +56,7 @@ async def main():
         agent=math_agent,
         app_name=APP_NAME,
         session_service=session_service,
+        artifact_service=InMemoryArtifactService(),
     )
 
     # --- Ask a computation question ---
