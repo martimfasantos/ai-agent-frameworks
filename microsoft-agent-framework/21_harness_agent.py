@@ -44,6 +44,8 @@ async def main() -> None:
         name="Harness Assistant",
         description="A demo agent with memory, todos, and modes.",
         agent_instructions="You are a helpful assistant. Be concise.",
+        max_context_window_tokens=128000,
+        max_output_tokens=4096,
         disable_web_search=True,  # Disable web search for this demo
     )
 
@@ -52,11 +54,11 @@ async def main() -> None:
 
     # Turn 1: The agent will remember this
     response = await agent.run("My project deadline is next Friday.")
-    print(f"Turn 1: {response.output}\n")
+    print(f"Turn 1: {response.text}\n")
 
     # Turn 2: The agent should recall the deadline
     response = await agent.run("When is my deadline?")
-    print(f"Turn 2: {response.output}\n")
+    print(f"Turn 2: {response.text}\n")
 
     print("=== Harness Agent Features ===")
     print("- Memory: persists facts across turns")
