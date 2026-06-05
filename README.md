@@ -46,7 +46,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/ag2.svg" alt="AG2" width="52" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>0.12.3</code></td>
+      <td><code>0.13.2</code></td>
       <td>
           <a href="https://docs.ag2.ai/latest/">
             <picture>
@@ -368,7 +368,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/pydantic-ai.svg" alt="Pydantic-AI" width="120" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>1.96.0</code></td>
+      <td><code>1.104.0</code></td>
       <td>
           <a href="https://ai.pydantic.dev/">
             <picture>
