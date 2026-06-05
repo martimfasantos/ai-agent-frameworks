@@ -54,12 +54,13 @@ async def main() -> None:
     )
     print(f"Response: {reply2.body}\n")
 
-    # --- Inspect the stream ---
+    # --- Inspect the stream history ---
     print("=== Memory Stream Contents ===")
-    print(f"Total events in stream: {len(stream)}")
-    for i, event in enumerate(stream):
+    events = await stream.history.get_events()
+    print(f"Total events in stream: {len(events)}")
+    for i, event in enumerate(events):
         event_type = type(event).__name__
-        preview = str(event)[:60]
+        preview = str(event)[:80]
         print(f"  [{i}] {event_type}: {preview}...")
 
 
