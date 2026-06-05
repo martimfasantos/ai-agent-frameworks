@@ -1,7 +1,6 @@
 import os
 
 from crewai import Agent, Task, Crew
-from crewai.a2a import A2AClientConfig
 
 from settings import settings
 
@@ -10,17 +9,19 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 """
 -------------------------------------------------------
 In this example, we explore CrewAI with the following features:
-- Agent-to-Agent (A2A) protocol for inter-agent communication
-- A2AClientConfig for connecting to remote A2A-compatible agents
-- Using remote agents as tools within a crew
+- Agent-to-Agent (A2A) protocol concepts
+- A2AClientConfig structure for connecting to remote agents
+- A2AServerConfig structure for exposing crews as A2A endpoints
 
 A2A (Agent-to-Agent) is Google's open protocol that lets agents from
 different frameworks communicate. CrewAI supports A2A natively:
 - As a CLIENT: call remote A2A agents from within a crew
-- As a SERVER: expose a crew as an A2A endpoint (see docs)
+- As a SERVER: expose a crew as an A2A endpoint
 
-This example shows the client side — connecting to a remote A2A agent
-and using it as a tool in your crew workflow.
+This example demonstrates A2A config structures and runs a local
+crew that would coordinate with remote agents in production.
+
+Requirements: pip install crewai[a2a] (installs a2a-sdk)
 
 For more details, visit:
 https://docs.crewai.com/en/concepts/a2a
@@ -28,73 +29,71 @@ https://docs.crewai.com/en/concepts/a2a
 """
 
 
-# --- 1. Configure an A2A remote agent connection ---
-# This would connect to any A2A-compatible agent server (CrewAI, ADK, etc.)
-# For demo purposes we show the config structure; replace with a real endpoint.
-remote_math_agent = A2AClientConfig(
-    endpoint="http://localhost:8000/.well-known/agent.json",
-    timeout=30,
-    max_turns=5,
-    fail_fast=True,
-)
-
-# --- 2. Define a local agent that delegates to remote A2A agent ---
-coordinator = Agent(
-    role="Task Coordinator",
-    goal="Coordinate tasks between local and remote agents",
-    backstory=(
-        "You coordinate complex workflows by delegating specialized tasks "
-        "to the most appropriate agent, whether local or remote."
-    ),
-    llm=settings.OPENAI_MODEL_NAME,
-    verbose=False,
-)
-
-local_writer = Agent(
-    role="Technical Writer",
-    goal="Write clear technical documentation",
-    backstory="You specialize in making complex topics understandable.",
-    llm=settings.OPENAI_MODEL_NAME,
-    verbose=False,
-)
-
-# --- 3. Define tasks ---
-# In a real setup, a task can target a remote A2A agent via the protocol
-writing_task = Task(
-    description="Write a brief explanation of the A2A protocol in 3 bullet points.",
-    expected_output="3 concise bullet points explaining A2A.",
-    agent=local_writer,
-)
-
-
 def main():
+    # --- 1. Show A2A Client Config structure ---
+    # In production, this connects to any A2A-compatible agent server
     print("=== A2A (Agent-to-Agent) Protocol Demo ===\n")
-    print("A2A enables cross-framework agent communication:")
-    print("  - CrewAI agents can call Google ADK, LangGraph, etc.")
-    print("  - Any A2A server can be consumed as a remote tool")
-    print("  - Protocol handles auth, streaming, and turn management\n")
+    print("--- A2AClientConfig (connect TO remote agents) ---")
+    print("  from crewai.a2a import A2AClientConfig")
+    print("  remote_agent = A2AClientConfig(")
+    print('      endpoint="http://remote-server/.well-known/agent.json",')
+    print("      timeout=30,")
+    print("      max_turns=5,")
+    print("      fail_fast=True,")
+    print("  )")
+    print()
 
-    # Show the A2A client config
-    print("A2A Client Config:")
-    print(f"  endpoint: {remote_math_agent.endpoint}")
-    print(f"  timeout:  {remote_math_agent.timeout}s")
-    print(f"  max_turns: {remote_math_agent.max_turns}")
-    print(f"  fail_fast: {remote_math_agent.fail_fast}\n")
+    # --- 2. Show A2A Server Config structure ---
+    print("--- A2AServerConfig (expose crew AS an A2A endpoint) ---")
+    print("  from crewai.a2a import A2AServerConfig")
+    print("  server = A2AServerConfig(")
+    print('      name="my-crew-server",')
+    print('      description="A CrewAI agent exposed via A2A",')
+    print('      version="1.0.0",')
+    print("      skills=[...],")
+    print("  )")
+    print("  # Then run: crewai a2a serve")
+    print()
 
-    # Run the local crew (the A2A remote call requires a running server)
+    # --- 3. Run a local crew (simulating the coordinator pattern) ---
+    print("--- Local Crew (coordinator pattern) ---\n")
+
+    coordinator = Agent(
+        role="Task Coordinator",
+        goal="Coordinate tasks and summarize results",
+        backstory="You coordinate workflows between specialized agents.",
+        llm=settings.OPENAI_MODEL_NAME,
+        verbose=False,
+    )
+
+    local_researcher = Agent(
+        role="Local Researcher",
+        goal="Research topics and provide factual summaries",
+        backstory="You provide quick factual answers on any topic.",
+        llm=settings.OPENAI_MODEL_NAME,
+        verbose=False,
+    )
+
+    research_task = Task(
+        description="Explain what the A2A protocol is and why it matters for multi-agent systems, in 3 bullet points.",
+        expected_output="3 concise bullet points about A2A protocol.",
+        agent=local_researcher,
+    )
+
     crew = Crew(
-        agents=[coordinator, local_writer],
-        tasks=[writing_task],
+        agents=[coordinator, local_researcher],
+        tasks=[research_task],
         verbose=False,
     )
 
     result = crew.kickoff()
-    print(f"Local result:\n{result.raw}\n")
+    print(f"Result:\n{result.raw}\n")
 
-    print("=== To expose this crew as an A2A server ===")
-    print("from crewai.a2a import A2AServerConfig")
-    print("server = A2AServerConfig(name='my-crew', skills=[...])")
-    print("# Then run: crewai a2a serve")
+    print("=== A2A Integration Summary ===")
+    print("- CrewAI crews can CALL remote A2A agents (any framework)")
+    print("- CrewAI crews can BE CALLED by other A2A clients")
+    print("- Protocol handles discovery, auth, streaming, and turns")
+    print("- Enables cross-framework orchestration (CrewAI + ADK + LangGraph)")
 
 
 if __name__ == "__main__":

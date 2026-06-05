@@ -34,6 +34,7 @@ factual_guardrail = LLMGuardrail(
     2. Does not include speculative or opinion-based claims
     3. Cites or references specific data points (numbers, dates, names)
     If the output contains unverifiable speculation, reject it.""",
+    llm=settings.OPENAI_MODEL_NAME,
 )
 
 # --- 2. Another LLM guardrail for format validation ---
@@ -43,6 +44,7 @@ format_guardrail = LLMGuardrail(
     2. Each point is concise (under 50 words)
     3. Contains exactly 3-5 key points
     Reject if the output is a single paragraph or has too many/few points.""",
+    llm=settings.OPENAI_MODEL_NAME,
 )
 
 
