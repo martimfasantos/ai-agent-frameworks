@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/ag2ai/ag2
 - Documentation: https://docs.ag2.ai/latest/
-- Version: **0.11.5**
+- Version: **0.13.2**
 
 ## About AG2
 
@@ -18,8 +18,9 @@ Key features:
 - **Code execution** - Local and Docker-based code executors
 - **Guardrails (Maris)** - Policy-based content filtering and safeguards
 - **MCP tools** - Model Context Protocol integration
-- **A2A protocol** - Agent-to-Agent communication over HTTP
+- **A2A protocol** - Agent-to-Agent communication over HTTP (v1.0 compatible)
 - **Observability** - Runtime logging to SQLite with event capture
+- **Beta Agent** - New async-first Agent with OpenAIConfig, MemoryStream observer, and structured responses (path to v1.0)
 
 ## Setup
 
@@ -58,6 +59,10 @@ uv run python 08_guardrails.py
 uv run python 09_mcp_tools.py
 uv run python 10_observability.py
 uv run python 11_a2a.py
+uv run python 12_beta_agent.py
+uv run python 13_beta_tools.py
+uv run python 14_beta_observer.py
+uv run python 15_beta_structured_output.py
 ```
 
 ## Examples
@@ -76,10 +81,16 @@ uv run python 11_a2a.py
 | 9 | `09_mcp_tools.py` | `create_toolkit()`, `stdio_client`, FastMCP server integration |
 | 10 | `10_observability.py` | `runtime_logging` to SQLite, event capture, post-hoc analysis |
 | 11 | `11_a2a.py` | `A2aAgentServer`, `A2aRemoteAgent`, distributed agents over HTTP |
+| 12 | `12_beta_agent.py` | Beta `Agent`, `OpenAIConfig`, async `ask()`, `AgentReply` |
+| 13 | `13_beta_tools.py` | Beta Agent tools, event history with tool call/result events |
+| 14 | `14_beta_observer.py` | `MemoryStream` event subscription, real-time event observation |
+| 15 | `15_beta_structured_output.py` | Beta Agent `response_schema`, Pydantic structured outputs |
+| 16 | `16_beta_middleware.py` | Beta Middleware for intercepting LLM calls and agent turns |
+| 17 | `17_beta_memory_stream.py` | MemoryStream for persistent conversation history across turns |
 
 ## Key dependencies
 
-- `ag2[openai,mcp,a2a]>=0.11.5` - AG2 framework with OpenAI, MCP, and A2A extras
+- `ag2[openai,mcp,a2a]>=0.13.2` - AG2 framework with OpenAI, MCP, and A2A extras
 - `mcp>=1.9.2` - Model Context Protocol SDK (for MCP server)
 - `pydantic-settings` - Settings management from .env
 - `uvicorn` - ASGI server for A2A examples

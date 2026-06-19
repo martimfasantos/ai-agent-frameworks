@@ -1,6 +1,6 @@
 # Agno Example Outputs
 
-Captured outputs from running all 16 examples against agno v2.5.17 with `gpt-4o-mini`.
+Captured outputs from running all 17 examples against agno v2.6.5 with `gpt-4o-mini`.
 
 > These outputs may vary between runs due to LLM non-determinism. The structure and tool invocations should remain consistent.
 
@@ -438,3 +438,37 @@ Secure MCP Filesystem Server running on stdio
   3. [INPUT] Who invented the telephone?
   4. [OUTPUT] The telephone was invented by Alexander Graham Bell in 1876.
 ```
+
+---
+
+## 16_approval_decorator.py
+
+```
+=== Example 1: Safe operation (list files) ===
+
+╭─────────────────────────────────────╮
+│ ### Files in the current directory: │
+│ - `report.pdf`                      │
+│ - `notes.txt`                       │
+│ - `budget.xlsx`                     │
+│ - `photo.jpg`                       │
+╰─────────────────────────────────────╯
+
+=== Example 2: Destructive operation (delete file — needs approval) ===
+
+╭───────────────────────────────────────────────────╮
+│ I have tools to execute, but I need confirmation. │
+╰───────────────────────────────────────────────────╯
+
+Pending approvals: 1
+  Tool: delete_file
+  Args: {'filename': 'notes.txt'}
+
+=== Continuing after approval ===
+
+╭──────────────────────────────────────────╮
+│ The file **notes.txt** has been deleted. │
+╰──────────────────────────────────────────╯
+```
+
+> The @approval decorator gates the delete_file tool behind human approval while list_files executes freely.

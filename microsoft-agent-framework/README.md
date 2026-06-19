@@ -59,12 +59,16 @@ uv run python 00_hello_world.py
 | `16_workflows_agents.py` | Workflows: Agents | Chain LLM-powered agents in a workflow graph |
 | `17_workflows_human_in_the_loop.py` | Workflows: HITL | Pause workflows for human approval via `request_info` |
 | `18_workflows_visualization.py` | Workflows: Visualization | Export workflow graphs as Mermaid diagrams and PNG images |
+| `19_class_skill.py` | ClassSkill | Class-based skills with `@ClassSkill.resource` and `@ClassSkill.script` |
+| `20_prompt_injection_defense.py` | Prompt Injection Defense | FIDES information-flow control with integrity and confidentiality labels |
+| `21_harness_agent.py` | Harness Agent | Batteries-included agent with memory, todos, modes, and compaction |
 
 ## Key dependencies
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `agent-framework` | 1.0.1 | Core framework (agents, tools, middleware, workflows) |
+| `agent-framework` | 1.7.0 | Core framework (agents, tools, middleware, workflows) |
+| `agent-framework-core` | 1.7.0 | Core abstractions and base classes |
 | `agent-framework-declarative` | 1.0.0b260409 | YAML/JSON declarative agent definitions |
 | `agent-framework-orchestrations` | 1.0.0b260409 | Sequential and Handoff orchestration builders |
 | `pydantic` | >=2.0 | Structured output schemas |

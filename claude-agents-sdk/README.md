@@ -2,61 +2,100 @@
 
 - Repo: https://github.com/anthropics/claude-agent-sdk-python
 - Documentation: https://platform.claude.com/docs/en/agent-sdk/overview
+- Version: **0.1.80**
 
-## Claude Agent SDK Examples
+## About Claude Agent SDK
 
-| # | Example | Feature | Doc Page |
-|---|---------|---------|----------|
-| 00 | [Hello World](00_hello_world.py) | One-shot query | [Quickstart](https://platform.claude.com/docs/en/agent-sdk/quickstart) |
-| 01 | [Built-in Tools](01_built_in_tools.py) | Read, Bash, Glob, Grep | [Overview](https://platform.claude.com/docs/en/agent-sdk/overview#capabilities) |
-| 02 | [Custom Tools](02_custom_tools.py) | @tool + MCP server | [Custom Tools](https://platform.claude.com/docs/en/agent-sdk/custom-tools) |
-| 03 | [Structured Outputs](03_structured_outputs.py) | JSON Schema / Pydantic | [Structured Outputs](https://platform.claude.com/docs/en/agent-sdk/structured-outputs) |
-| 04 | [System Prompts](04_system_prompts.py) | Custom, preset, append | [System Prompts](https://platform.claude.com/docs/en/agent-sdk/modifying-system-prompts) |
-| 05 | [Permissions](05_permissions.py) | Modes, allow/deny, can_use_tool | [Permissions](https://platform.claude.com/docs/en/agent-sdk/permissions) |
-| 06 | [Hooks](06_hooks.py) | PreToolUse / PostToolUse | [Hooks](https://platform.claude.com/docs/en/agent-sdk/hooks) |
-| 07 | [Sessions](07_sessions.py) | Resume, fork, continue | [Sessions](https://platform.claude.com/docs/en/agent-sdk/sessions) |
-| 08 | [Multi-turn](08_multi_turn.py) | ClaudeSDKClient | [Streaming vs Single](https://platform.claude.com/docs/en/agent-sdk/streaming-vs-single-mode) |
-| 09 | [Subagents](09_subagents.py) | AgentDefinition, delegation | [Subagents](https://platform.claude.com/docs/en/agent-sdk/subagents) |
-| 10 | [MCP Servers](10_mcp_servers.py) | External stdio MCP | [MCP](https://platform.claude.com/docs/en/agent-sdk/mcp) |
-| 11 | [Streaming](11_streaming.py) | Real-time StreamEvent | [Streaming Output](https://platform.claude.com/docs/en/agent-sdk/streaming-output) |
-| 12 | [Cost Tracking](12_cost_tracking.py) | Budget, turns, effort | [Cost Tracking](https://platform.claude.com/docs/en/agent-sdk/cost-tracking) |
-| 13 | [File Checkpointing](13_file_checkpointing.py) | Track & rewind files | [File Checkpointing](https://platform.claude.com/docs/en/agent-sdk/file-checkpointing) |
+The Claude Agent SDK gives you the same tools, agent loop, and context management that power Claude Code, programmable in Python and TypeScript. It is maintained by Anthropic and designed for building production AI agents that autonomously read files, run commands, search the web, edit code, and more.
 
-### How to setup
+Key features:
+- **One-shot queries** - Send a prompt, get a result with `query()`
+- **Built-in tools** - Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
+- **Custom tools** - `@tool` decorator + in-process MCP servers
+- **Structured outputs** - JSON Schema / Pydantic model validation
+- **System prompts** - Custom string, preset, or preset with append
+- **Permissions** - Modes, allow/deny lists, `can_use_tool` callback
+- **Hooks** - PreToolUse, PostToolUse, Stop, SessionStart lifecycle hooks
+- **Sessions** - Resume, fork, continue conversations across calls
+- **SessionStore** - Pluggable transcript storage (in-memory, S3, Redis, Postgres)
+- **Subagents** - AgentDefinition for task delegation
+- **MCP servers** - Connect external tool servers via stdio/HTTP
+- **Streaming** - Real-time StreamEvent and partial message delivery
+- **Deferred tool use** - Human-in-the-loop approval via hook deferral
+- **Hook event streaming** - Observe hook lifecycle via HookEventMessage
+- **Strict MCP config** - Lock down MCP sources for deterministic tool sets
+- **Cost tracking** - Budget caps, turn limits, effort levels
 
-#### Virtual environment
+## Setup
 
-This project uses `uv` for dependency management. Install dependencies with:
+### Prerequisites
+
+- Python 3.13+
+- [uv](https://docs.astral.sh/uv/) package manager
+- Claude Code CLI: `npm install -g @anthropic-ai/claude-code`
+
+### Install dependencies
 
 ```bash
 uv sync
 ```
 
-Or create a standard virtual environment:
+### Configure environment
+
+Copy `.env.example` to `.env` and add your Anthropic API key:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-pip install claude-agent-sdk python-dotenv pydantic pydantic-settings
+cp .env.example .env
+# Edit .env with your ANTHROPIC_API_KEY
 ```
 
-#### Prerequisites
-
-The Claude Agent SDK requires the **Claude Code CLI** to be installed:
+### Run examples
 
 ```bash
-npm install -g @anthropic-ai/claude-code
+uv run python 00_hello_world.py
+uv run python 01_built_in_tools.py
+uv run python 02_custom_tools.py
+uv run python 03_structured_outputs.py
+uv run python 04_system_prompts.py
+uv run python 05_permissions.py
+uv run python 06_hooks.py
+uv run python 07_sessions.py
+uv run python 08_multi_turn.py
+uv run python 09_subagents.py
+uv run python 10_mcp_servers.py
+uv run python 11_streaming.py
+uv run python 12_cost_tracking.py
+uv run python 13_file_checkpointing.py
+uv run python 14_session_store.py
+uv run python 15_deferred_tool_use.py
+uv run python 16_hook_events.py
+uv run python 17_strict_mcp.py
 ```
 
-#### .env
+## Examples
 
-See `.env.example` and create a `.env` file.
-You need an Anthropic API key (`ANTHROPIC_API_KEY`).
+| # | File | Topics |
+|---|------|--------|
+| 00 | `00_hello_world.py` | One-shot query, ResultMessage |
+| 01 | `01_built_in_tools.py` | Built-in tools (Read, Glob), allowed_tools, tool inspection |
+| 02 | `02_custom_tools.py` | @tool decorator, create_sdk_mcp_server, in-process MCP |
+| 03 | `03_structured_outputs.py` | JSON Schema output, Pydantic model schema |
+| 04 | `04_system_prompts.py` | Custom string, preset, preset with append |
+| 05 | `05_permissions.py` | Permission modes, allow/deny lists, can_use_tool callback |
+| 06 | `06_hooks.py` | PreToolUse/PostToolUse hooks, matchers, deny decisions |
+| 07 | `07_sessions.py` | Session resume, fork, session ID capture |
+| 08 | `08_multi_turn.py` | ClaudeSDKClient, multi-turn conversations |
+| 09 | `09_subagents.py` | AgentDefinition, agent delegation, model selection |
+| 10 | `10_mcp_servers.py` | External MCP server (stdio), filesystem tools |
+| 11 | `11_streaming.py` | Real-time StreamEvent, partial messages |
+| 12 | `12_cost_tracking.py` | Cost tracking, max_turns, max_budget_usd, effort |
+| 13 | `13_file_checkpointing.py` | File checkpointing, rewind_files |
+| 14 | `14_session_store.py` | InMemorySessionStore, eager flush, store inspection |
+| 15 | `15_deferred_tool_use.py` | HITL deferred tool use, hook "defer" decision |
+| 16 | `16_hook_events.py` | Hook event streaming, HookEventMessage |
+| 17 | `17_strict_mcp.py` | strict_mcp_config for deterministic tool sets |
 
-#### Run examples
+## Key dependencies
 
-```bash
-uv run 00_hello_world.py
-uv run 02_custom_tools.py
-# etc.
-```
+- `claude-agent-sdk>=0.1.80` - Claude Agent SDK (Python)
+- `pydantic-settings` - Settings management from .env

@@ -5,7 +5,7 @@ description = "OpenAI Agents SDK examples"
 requires-python = ">=3.11"
 dependencies = [
     "openai==2.29.0",
-    "openai-agents[viz,voice]==0.14.2",
+    "openai-agents[viz,voice]>=0.17.2",
     "pydantic==2.12.5",
     "pydantic-settings==2.9.1",
     "python-dotenv==1.1.0",

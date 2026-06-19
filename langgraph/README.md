@@ -60,6 +60,7 @@ uv run python 00_hello_world.py
 | `19_orchestrator_worker.py` | Orchestrator-Worker | `Send`, `with_structured_output` for planning |
 | `20_evaluator_optimizer.py` | Evaluator-Optimizer Loop | Conditional looping, structured evaluation |
 | `21_functional_api.py` | Functional API | `@entrypoint`, `@task`, `entrypoint.final`, futures |
+| `22_error_handling_and_caching.py` | Error Handling & Caching | Node-level `error_handler`, `CachePolicy` with TTL |
 
 ## Key dependencies
 

@@ -615,3 +615,23 @@ Saved in checkpoint: The report on Artificial Intelligence Ethics examines the m
     Words: 50
     Status: published
 ```
+
+## 22_error_handling_and_caching.py
+
+```
+=== Successful Query ===
+  Answer: The capital of France is Paris.
+
+=== Failed Query (triggers error handler) ===
+  [Error Handler] Recovered from failure for: 'Please fail this lookup'
+  Answer: [Fallback] Could not process 'Please fail this lookup' — service unavailable.
+
+=== Cached Query (same input, uses cache) ===
+  Answer: The capital of France is Paris.
+
+=== Node Configuration ===
+  cache_policy.ttl: 60s
+  error_handler: on_lookup_error (graceful degradation)
+```
+
+> Demonstrates node-level error handlers and cache policies (new in v1.2.0) — graceful degradation when nodes fail, and TTL-based caching for expensive computations.

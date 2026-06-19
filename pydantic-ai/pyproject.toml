@@ -5,8 +5,8 @@ description = "Pydantic AI framework examples"
 requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.10.0",
-    "pydantic-ai>=1.70.0",
-    "pydantic-ai-slim[a2a]>=1.70.0",
+    "pydantic-ai>=1.96.0",
+    "pydantic-ai-slim[a2a]>=1.93.0",
     "pydantic-evals>=0.2.0",
     "pydantic-graph>=0.2.0",
     "pydantic-settings>=2.7.0",
@@ -14,4 +14,5 @@ dependencies = [
     "openai>=1.60.0",
     "uvicorn>=0.30.0",
     "mcp>=1.0.0",
+    "griffe<2",
 ]

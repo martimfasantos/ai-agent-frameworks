@@ -62,6 +62,7 @@ async def main():
 
     # 2. Define a RealtimeAgent (similar to Agent, but for realtime sessions)
     agent = RealtimeAgent(
+        model="gpt-4o-mini-realtime-preview",
         name="Voice Assistant",
         instructions=(
             "You are a helpful voice assistant. Keep responses short and "

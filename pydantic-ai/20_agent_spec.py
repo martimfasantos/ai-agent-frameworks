@@ -19,7 +19,7 @@ In this example, we explore Pydantic AI with the following features:
 - Building a runnable Agent from a spec with Agent.from_spec()
 
 AgentSpec lets you define agent configuration (model, instructions,
-model settings, capabilities, retries, etc.) in a declarative format
+model settings, capabilities, output_retries, etc.) in a declarative format
 outside of Python code. This is useful for non-developer configuration,
 version-controlled agent definitions, and dynamic agent loading.
 
@@ -40,7 +40,7 @@ async def main():
         "model": settings.OPENAI_MODEL_NAME,
         "name": "dict_agent",
         "instructions": "Be concise. Reply in one sentence.",
-        "retries": 2,
+        "output_retries": 2,
         "model_settings": {"temperature": 0.3},
     }
 
@@ -58,7 +58,7 @@ async def main():
 model: {settings.OPENAI_MODEL_NAME}
 name: yaml_agent
 instructions: You are a helpful assistant that speaks like a pirate. Be concise.
-retries: 1
+output_retries: 2
 model_settings:
   temperature: 0.7
 """
@@ -94,7 +94,7 @@ model_settings:
 
     print(f"Name: {spec.name}")
     print(f"Model: {spec.model}")
-    print(f"Retries: {spec.retries}")
+    print(f"Output retries: {spec.output_retries}")
     print(f"Instructions: {spec.instructions}")
     print(f"Model settings: {spec.model_settings}")
 

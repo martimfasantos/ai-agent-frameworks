@@ -1,6 +1,6 @@
 # OpenAI Agents SDK — Example Outputs
 
-All examples run with `openai-agents>=0.14.2`, `openai>=2.0.0`, model `gpt-4o-mini`.
+All examples run with `openai-agents>=0.17.0`, `openai>=2.29.0`, model `gpt-4o-mini`.
 
 ---
 
@@ -410,3 +410,37 @@ Pipeline complete!
 > Sends 3 seconds of silence as input and collects streamed audio output events
 > without requiring audio hardware. In production, feed real microphone data and
 > play back audio chunks via `sounddevice`.
+
+---
+
+## 15. Sandbox Agent (`15_sandbox_agent.py`)
+
+```
+=== Sandbox Agent Example ===
+
+Running sandbox agent with UnixLocalSandboxClient...
+
+Agent response:
+The code in `hello.py` defines a function `greet` that returns a greeting
+message for a specified name. When the script is run directly, it prints
+"Hello, World!" by calling the `greet` function.
+
+### Function Names
+- `greet`
+
+SandboxAgent configuration:
+  Name: Code Reviewer
+  Model: gpt-4o-mini
+  Manifest entries: ['hello.py', 'task.md']
+  Tools: ['read_file']
+
+=== Sandbox Agent Demo Complete ===
+With gpt-5.5+, use Capabilities.default() for built-in shell
+and filesystem tools instead of custom function tools.
+```
+
+> The SandboxAgent reads workspace files via a function tool and follows
+> task instructions from a Manifest-staged `task.md`. With GPT-5.5+ models,
+> built-in Capabilities provide real shell and filesystem access instead.
+
+

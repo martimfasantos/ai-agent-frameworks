@@ -2,13 +2,14 @@
 
 - Repo: https://github.com/openai/openai-agents-python
 - Documentation: https://openai.github.io/openai-agents-python/
-- SDK Version: >= 0.14.2
+- SDK Version: >= 0.17.2
 
 ## Key Features
 
 The OpenAI Agents SDK provides a lightweight framework for building multi-agent workflows. Features that make it **distinct from other frameworks**:
 
 - **Voice Agents** — VoicePipeline for STT → Agent → TTS voice applications with streaming audio
+- **Sandbox Agents** — Persistent isolated workspaces with manifests, shell, filesystem, and session resume
 - **Sessions** — Built-in persistent memory across turns (SQLite, Redis, SQLAlchemy, etc.) with no manual history management
 - **Human-in-the-Loop** — Pause/resume execution for tool approval with serializable `RunState`
 - **MCP Tools** — First-class Model Context Protocol support, including `HostedMCPTool` (OpenAI-hosted, no local server needed)
@@ -37,6 +38,7 @@ The OpenAI Agents SDK provides a lightweight framework for building multi-agent 
 | 12 | `12_realtime_agent.py` | **Realtime Agents** — WebSocket voice agents with RealtimeRunner |
 | 13 | `13_agent_visualization.py` | **Agent Visualization** — draw_graph() for agent architecture |
 | 14 | `14_voice_agent.py` | **Voice Agents** — VoicePipeline (STT → Agent → TTS) with streaming |
+| 15 | `15_sandbox_agent.py` | **Sandbox Agents** — SandboxAgent, Manifest, UnixLocalSandboxClient |
 
 ## How to Setup
 
@@ -71,4 +73,5 @@ OPENAI_MODEL_NAME=gpt-4o-mini
 uv run python 00_hello_world.py
 uv run python 09_sessions.py
 uv run python 14_voice_agent.py
+uv run python 15_sandbox_agent.py
 ```

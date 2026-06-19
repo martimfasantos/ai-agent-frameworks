@@ -1,6 +1,6 @@
 # Claude Agent SDK - Example Outputs
 
-All examples run with `claude-agent-sdk==0.1.52` and the Claude Code CLI (`claude` v2.1.12). The SDK auto-selects the model via `ANTHROPIC_API_KEY`.
+All examples run with `claude-agent-sdk>=0.1.80` and the Claude Code CLI. The SDK auto-selects the model via `ANTHROPIC_API_KEY`.
 
 > **Note:** LLM responses are non-deterministic. Your outputs will differ in wording but should follow the same structure and demonstrate the same features.
 
@@ -469,5 +469,113 @@ File after rewind: Original content: Hello World
 ```
 
 **Verdict:** PASS - File checkpointing enabled with `enable_file_checkpointing=True` and `extra_args={"replay-user-messages": None}`. Agent modifies file across two turns, then `rewind_files()` restores the file to its original state by resuming the session with an empty prompt.
+
+---
+
+## 14. Session Store (`14_session_store.py`)
+
+```
+$ uv run python 14_session_store.py
+
+=== Session Store Demo ===
+Store type: InMemorySessionStore
+
+--- Step 1: Run a query with session mirroring ---
+Response: The three primary colors are red, blue, and yellow.
+Session ID: abc123-...
+
+--- Step 2: List sessions from store ---
+Sessions in store: 1
+  - abc123-... (created: 2026-05-10T...)
+
+--- Step 3: Read messages from session abc123-... ---
+Total messages in transcript: 4
+  [SystemMessage]
+  [UserMessage]
+  [AssistantMessage]
+  [ResultMessage] -> The three primary colors are red, blue, and yel...
+```
+
+> SessionStore decouples transcript storage from local disk. The InMemorySessionStore mirrors the session in real-time via `session_store_flush="eager"`, and `list_sessions_from_store` / `get_session_messages_from_store` inspect the stored transcript.
+
+**Verdict:** PASS - InMemorySessionStore captures session transcript, list and read functions work.
+
+---
+
+## 15. Deferred Tool Use (`15_deferred_tool_use.py`)
+
+```
+$ uv run python 15_deferred_tool_use.py
+
+=== Deferred Tool Use (Human-in-the-Loop) ===
+  [HITL Hook] Tool 'mcp__database__delete_record' requested with args: {'record_id': 'usr-42'}
+  [HITL Hook] Deferring for human approval...
+
+Result subtype: end_turn
+
+--- Deferred Tool Use ---
+  Tool ID:    toolu_abc123
+  Tool Name:  mcp__database__delete_record
+  Tool Input: {'record_id': 'usr-42'}
+
+  A human reviewer would inspect this and decide to approve or deny.
+  To resume, pass the session ID back with the approval decision.
+```
+
+> The PreToolUse hook returns `permissionDecision: "defer"`, which halts the agent run. The `deferred_tool_use` field on ResultMessage carries the tool call details for human review.
+
+**Verdict:** PASS - Deferred tool use stops the agent and exposes the pending tool call for HITL review.
+
+---
+
+## 16. Hook Events (`16_hook_events.py`)
+
+```
+$ uv run python 16_hook_events.py
+
+=== Hook Event Streaming ===
+
+[HookEvent #1]
+  Event: PreToolUse
+  Subtype: hook_event
+  Tool: Glob
+
+[HookEvent #2]
+  Event: PostToolUse
+  Subtype: hook_event
+  Tool: Glob
+
+--- Result ---
+Here are the Python files in the current directory: ...
+
+Total hook events received: 2
+```
+
+> With `include_hook_events=True`, hook lifecycle events are streamed as `HookEventMessage` objects, giving full observability into which hooks fired and their decisions.
+
+**Verdict:** PASS - HookEventMessage objects received in the stream with tool and event metadata.
+
+---
+
+## 17. Strict MCP Config (`17_strict_mcp.py`)
+
+```
+$ uv run python 17_strict_mcp.py
+
+=== Strict MCP Config Demo ===
+
+Running with strict_mcp_config=True (no external MCP servers)...
+
+[Tool] Glob
+
+--- Result ---
+Here are the Python files in the current directory: ...
+
+Note: strict_mcp_config=True ensured no project/user/global MCP servers loaded.
+```
+
+> With `strict_mcp_config=True`, only explicitly-passed MCP servers are available. No project, user, or global MCP configurations are loaded, ensuring a deterministic tool set.
+
+**Verdict:** PASS - Agent runs with only built-in tools; no external MCP servers loaded.
 
 ---

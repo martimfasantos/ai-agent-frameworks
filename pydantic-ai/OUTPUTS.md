@@ -1,6 +1,6 @@
 # Pydantic AI — Example Outputs
 
-All examples run with `pydantic-ai>=1.84.0`, model `gpt-4o-mini`.
+All examples run with `pydantic-ai>=1.93.0`, model `gpt-4o-mini`.
 
 > **Note:** LLM responses are non-deterministic. Your outputs will differ in wording
 > but should follow the same structure and demonstrate the same features.
@@ -569,9 +569,102 @@ Run individually with: python 19_capabilities.py
 ## 20. Agent Spec (`20_agent_spec.py`)
 
 ```
-(Not executed — batch run timed out on previous example)
+=== Example 1: AgentSpec from Dict ===
+Response: The capital of Portugal is Lisbon.
 
-Run individually with: python 20_agent_spec.py
+=== Example 2: AgentSpec from YAML ===
+Response: Arrr, matey! Did ye know that octopuses have three hearts?
+
+=== Example 3: Save and Load from File ===
+Saved spec to /tmp/.../agent_spec.yaml
+Contents:
+model: gpt-4o-mini
+name: dict_agent
+instructions: Be concise. Reply in one sentence.
+model_settings:
+  temperature: 0.3
+output_retries: 2
+
+Response from reloaded spec: 2 + 2 equals 4.
+
+=== Example 4: Inspect Spec Fields ===
+Name: dict_agent
+Model: gpt-4o-mini
+Output retries: 2
+Instructions: Be concise. Reply in one sentence.
+Model settings: {'temperature': 0.3}
 ```
 
-> Demonstrates Pydantic AI agent specification patterns for defining agent contracts and interfaces. Run this example individually as it was not reached during the batch execution.
+> Uses `AgentSpec` for declarative agent configuration with `output_retries` (replacing deprecated `retries`), YAML/JSON serialization, and `Agent.from_spec()`.
+
+---
+
+## 21. Tool Choice (`21_tool_choice.py`)
+
+```
+=== Example 1: tool_choice='auto' (default) ===
+Response: The weather in Paris is sunny with a temperature of 22°C.
+Usage: 188 input tokens
+
+=== Example 2: tool_choice='required' ===
+Response: Tokyo is currently experiencing rainy weather with a temperature of
+    18°C. The city's population is approximately 13.9 million.
+Usage: 226 input tokens
+
+=== Example 3: tool_choice='none' ===
+Response: The weather in London is cloudy with a temperature of 14°C.
+(Model answered from training data, no tools called)
+
+=== Example 4: Agent-level tool_choice ===
+Response: 42 * 7 equals 294.
+```
+
+> Demonstrates `tool_choice` model setting: `'auto'` lets the model decide, `'required'` forces tool use, `'none'` disables tools. Can be set per-run or at agent level.
+
+---
+
+## 22. Advanced Capabilities (`22_advanced_capabilities.py`)
+
+```
+=== Example 1: CombinedCapability ===
+Response: The sum of 15 and 27 is 42, and the word count in 'hello world foo' is 3.
+
+=== Example 2: CapabilityOrdering ===
+  [Hook] Sending request (step 1)...
+  [Hook] Sending request (step 2)...
+Response: The result of 8 * 12 is 96.
+
+=== Example 3: output_retries (replaces deprecated retries) ===
+Response: The speed of light in a vacuum is approximately 299,792 kilometers per
+    second (about 186,282 miles per second).
+
+=== Example 4: PrepareTools Capability ===
+Response: The sum of 100 and 200 is 300.
+(Only math tools were available despite TextCapability being registered)
+```
+
+> Shows `CombinedCapability` for bundling capabilities, `CapabilityOrdering` for controlling evaluation order, `output_retries` replacing deprecated `retries`, and `PrepareTools` for runtime tool filtering.
+
+## 23_tool_search.py
+
+```
+=== Tool Search: Deferred Loading ===
+
+Q: What's the weather in Lisbon?
+A: The weather in Lisbon is sunny with a temperature of 26°C.
+
+Q: Convert 100 USD to EUR
+A: 100 USD is equivalent to 92.00 EUR.
+
+Q: Calculate the tip on a $85 bill at 20%
+A: The tip on an $85 bill at 20% is $17.00.
+
+=== Tool Configuration ===
+  get_weather:      defer_loading=False (always visible)
+  convert_currency: defer_loading=True  (discovered via search)
+  translate_text:   defer_loading=True  (discovered via search)
+  calculate_tip:    defer_loading=True  (discovered via search)
+  get_time_zone:    defer_loading=True  (discovered via search)
+```
+
+> Demonstrates deferred tool loading — only `get_weather` is immediately visible to the model, while other tools are discovered via tool search when needed.
