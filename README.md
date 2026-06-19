@@ -340,7 +340,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
         </picture>
     <strong style="vertical-align: middle; font-size: 1.2em;">OpenAI Agents SDK</strong>
       </td>
-      <td><code>0.17.0</code></td>
+      <td><code>0.17.6</code></td>
       <td>
           <a href="https://openai.github.io/openai-agents-python/">
             <picture>

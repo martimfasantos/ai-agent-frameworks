@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/openai/openai-agents-python
 - Documentation: https://openai.github.io/openai-agents-python/
-- SDK Version: >= 0.17.2
+- SDK Version: >= 0.17.6
 
 ## Key Features
 
@@ -16,7 +16,7 @@ The OpenAI Agents SDK provides a lightweight framework for building multi-agent 
 - **Realtime Agents** — WebSocket-based voice agents with sub-second latency (`RealtimeAgent` + `RealtimeRunner`)
 - **Agent Visualization** — Generate Graphviz diagrams of agent architectures with `draw_graph()`
 - **Handoffs & Orchestration** — Native agent-to-agent delegation with streaming support
-- **Guardrails** — Input/output validation and LLM-as-a-judge patterns
+- **Guardrails** — Input/output validation, tool input guardrails, and LLM-as-a-judge patterns
 - **Tracing** — Built-in OpenAI trace integration for debugging
 
 ## Examples
@@ -39,6 +39,7 @@ The OpenAI Agents SDK provides a lightweight framework for building multi-agent 
 | 13 | `13_agent_visualization.py` | **Agent Visualization** — draw_graph() for agent architecture |
 | 14 | `14_voice_agent.py` | **Voice Agents** — VoicePipeline (STT → Agent → TTS) with streaming |
 | 15 | `15_sandbox_agent.py` | **Sandbox Agents** — SandboxAgent, Manifest, UnixLocalSandboxClient |
+| 16 | `16_tool_input_guardrails.py` | **Tool Input Guardrails** — pre-execution arg checks with allow/reject/raise |
 
 ## How to Setup
 

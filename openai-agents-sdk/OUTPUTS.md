@@ -1,6 +1,6 @@
 # OpenAI Agents SDK — Example Outputs
 
-All examples run with `openai-agents>=0.17.0`, `openai>=2.29.0`, model `gpt-4o-mini`.
+All examples run with `openai-agents>=0.17.6`, `openai>=2.43.0`, model `gpt-4o-mini`.
 
 ---
 
@@ -442,5 +442,30 @@ and filesystem tools instead of custom function tools.
 > The SandboxAgent reads workspace files via a function tool and follows
 > task instructions from a Manifest-staged `task.md`. With GPT-5.5+ models,
 > built-in Capabilities provide real shell and filesystem access instead.
+
+---
+
+## 16. Tool Input Guardrails (`16_tool_input_guardrails.py`)
+
+```
+Allowed case:
+Transferred $50.00 to Alice.
+
+Rejected case:
+The transfer of $5,000 to Bob has been refused because it exceeds the limit
+for automatic transactions. Please let me know if you'd like to transfer a
+smaller amount or need assistance with something else.
+
+Blocked case: guardrail tripped.
+Info: {'amount': 25000.0, 'decision': 'blocked'}
+```
+
+> A tool input guardrail (added in 0.17.6) inspects the arguments before the
+> `transfer_money` tool runs. The guardrail returns one of three behaviors via
+> `ToolGuardrailFunctionOutput`: `allow()` lets the $50 transfer through,
+> `reject_content()` skips the $5,000 transfer and feeds a refusal back to the
+> model, and `raise_exception()` halts the run on the $25,000 transfer with a
+> `ToolInputGuardrailTripwireTriggered`.
+
 
 
