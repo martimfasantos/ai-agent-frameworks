@@ -13,14 +13,16 @@ load_dotenv()
 In this example, we explore Pydantic AI with the following features:
 - tool_choice model setting to control tool calling behavior
 - 'auto' (default): model decides whether to call tools
-- 'required': model must call at least one tool
 - 'none': model cannot call any tools
 - Per-run tool_choice override via model_settings
 
 The tool_choice setting gives you fine-grained control over how the
-model interacts with available tools. This is useful for forcing tool
-use in workflows that depend on structured tool outputs, or disabling
+model interacts with available tools. This is useful for disabling
 tools temporarily without removing them from the agent.
+
+Note: As of v1.104.0, tool_choice='required' is no longer compatible
+with agent.run() because it prevents the agent from producing a final
+text response. For forced tool calls, use pydantic_ai.direct instead.
 
 For more details, visit:
 https://ai.pydantic.dev/agents/#model-settings
@@ -61,6 +63,7 @@ async def main():
 
     # ------------------------------------------------------------------
     # Example 1: tool_choice='auto' (default behavior)
+    # The model decides on its own whether to call a tool.
     # ------------------------------------------------------------------
     print("=== Example 1: tool_choice='auto' (default) ===")
 
@@ -72,50 +75,37 @@ async def main():
     print(f"Usage: {result1.usage().input_tokens} input tokens\n")
 
     # ------------------------------------------------------------------
-    # Example 2: tool_choice='required' -- force tool use
+    # Example 2: tool_choice='none' -- disable tools entirely
+    # The model answers from its own knowledge, ignoring tools.
     # ------------------------------------------------------------------
-    print("=== Example 2: tool_choice='required' ===")
+    print("=== Example 2: tool_choice='none' ===")
 
     result2 = await agent.run(
-        "Tell me about Tokyo.",
-        model_settings={"tool_choice": "required"},
-    )
-    print(f"Response: {result2.output}")
-    print(f"Usage: {result2.usage().input_tokens} input tokens\n")
-
-    # ------------------------------------------------------------------
-    # Example 3: tool_choice='none' -- disable tools
-    # ------------------------------------------------------------------
-    print("=== Example 3: tool_choice='none' ===")
-
-    result3 = await agent.run(
         "What's the weather in London?",
         model_settings={"tool_choice": "none"},
     )
-    print(f"Response: {result3.output}")
+    print(f"Response: {result2.output}")
     print(f"(Model answered from training data, no tools called)\n")
 
     # ------------------------------------------------------------------
-    # Example 4: tool_choice set at agent level via model_settings
+    # Example 3: Switching tool_choice per-run
+    # Same agent, different behavior per call.
     # ------------------------------------------------------------------
-    print("=== Example 4: Agent-level tool_choice ===")
+    print("=== Example 3: Per-run switching ===")
 
-    forced_agent = Agent(
-        model=settings.OPENAI_MODEL_NAME,
-        instructions="Be concise. Always use tools.",
-        model_settings={"tool_choice": "required"},
+    # First call: tools enabled
+    r_auto = await agent.run(
+        "Population of Tokyo?",
+        model_settings={"tool_choice": "auto"},
     )
+    print(f"With tools (auto): {r_auto.output}")
 
-    @forced_agent.tool_plain
-    def calculate(expression: str) -> str:
-        """Evaluate a math expression."""
-        try:
-            return str(eval(expression))
-        except Exception:
-            return "Error evaluating expression"
-
-    result4 = await forced_agent.run("What is 42 * 7?")
-    print(f"Response: {result4.output}")
+    # Second call: tools disabled
+    r_none = await agent.run(
+        "Population of Tokyo?",
+        model_settings={"tool_choice": "none"},
+    )
+    print(f"Without tools (none): {r_none.output}")
 
 
 if __name__ == "__main__":
