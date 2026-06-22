@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/google/adk-python
 - Documentation: https://google.github.io/adk-docs/
-- Version: **2.1.0**
+- Version: **2.3.0**
 
 Google Agent Development Kit (ADK) is Google's open-source framework for building, evaluating, and deploying AI agents. It provides a rich set of primitives for tool use, multi-agent orchestration, session management, memory, callbacks, and structured outputs — all tightly integrated with the Gemini model family while also supporting third-party models via LiteLLM.
 
@@ -74,8 +74,8 @@ uv run python 00_hello_world.py
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `google-adk` | 2.1.0 | Core framework |
-| `google-adk[eval]` | 2.1.0 | Evaluation extras (rouge-score, scikit-learn, pandas) |
+| `google-adk` | 2.3.0 | Core framework |
+| `google-adk[eval]` | 2.3.0 | Evaluation extras (rouge-score, scikit-learn, pandas) |
 | `pydantic` | ≥2.0 | Structured output schemas and settings |
 | `pydantic-settings` | ≥2.0 | `.env` file loading via `BaseSettings` |
 | `litellm` | latest | Third-party model routing (required for `09_litellm.py`) |
