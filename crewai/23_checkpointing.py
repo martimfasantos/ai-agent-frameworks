@@ -39,8 +39,7 @@ for d in [CHECKPOINT_DIR, AGENT_CP_DIR]:
 # --------------------------------------------------------------
 # Example 1: Crew with checkpointing enabled
 # --------------------------------------------------------------
-print("=== Example 1: Crew with Checkpointing ===
-")
+print("=== Example 1: Crew with Checkpointing ===\n")
 
 researcher = Agent(
     role="Researcher",
@@ -79,22 +78,18 @@ crew = Crew(
 )
 
 result = crew.kickoff()
-print(f"
-Crew result: {result.raw[:300]}")
+print(f"\nCrew result: {result.raw[:300]}")
 
 # --- 2. List saved checkpoints ---
 checkpoint_files = sorted(glob.glob(os.path.join(CHECKPOINT_DIR, "**", "*.json"), recursive=True))
-print(f"
-Checkpoints saved: {len(checkpoint_files)}")
+print(f"\nCheckpoints saved: {len(checkpoint_files)}")
 for f in checkpoint_files:
     print(f"  - {os.path.basename(f)}")
 
 # --------------------------------------------------------------
 # Example 2: Agent-level checkpointing with standalone kickoff
 # --------------------------------------------------------------
-print("
-=== Example 2: Agent-Level Checkpointing ===
-")
+print("\n=== Example 2: Agent-Level Checkpointing ===\n")
 
 standalone_agent = Agent(
     role="Quick Analyst",
@@ -116,9 +111,7 @@ print(f"Agent checkpoints saved: {len(agent_cp_files)}")
 # --------------------------------------------------------------
 # Example 3: Forking from a checkpoint
 # --------------------------------------------------------------
-print("
-=== Example 3: Forking from a Checkpoint ===
-")
+print("\n=== Example 3: Forking from a Checkpoint ===\n")
 
 if checkpoint_files:
     fork_checkpoint = checkpoint_files[0]
@@ -135,5 +128,4 @@ else:
 for d in [CHECKPOINT_DIR, AGENT_CP_DIR]:
     if os.path.exists(d):
         shutil.rmtree(d)
-print("
-Demo checkpoint directories cleaned up.")
+print("\nDemo checkpoint directories cleaned up.")
