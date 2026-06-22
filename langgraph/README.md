@@ -66,9 +66,9 @@ uv run python 00_hello_world.py
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `langgraph` | >=1.1.3 | Core graph framework |
-| `langchain` | >=1.2.13 | LangChain base library |
-| `langchain-openai` | >=1.1.12 | OpenAI model integration (`ChatOpenAI`) |
+| `langgraph` | >=1.2.6 | Core graph framework |
+| `langchain` | >=1.3.10 | LangChain base library |
+| `langchain-openai` | >=1.2.2 | OpenAI model integration (`ChatOpenAI`) |
 | `pydantic` | >=2.12.5 | State validation and structured outputs |
 | `pydantic-settings` | >=2.13.1 | `.env` file loading via `BaseSettings` |
 | `python-dotenv` | >=1.2.2 | Environment variable loading |
