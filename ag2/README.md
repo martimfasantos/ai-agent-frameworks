@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/ag2ai/ag2
 - Documentation: https://docs.ag2.ai/latest/
-- Version: **0.13.2**
+- Version: **0.13.4**
 
 ## About AG2
 
@@ -90,7 +90,7 @@ uv run python 15_beta_structured_output.py
 
 ## Key dependencies
 
-- `ag2[openai,mcp,a2a]>=0.13.2` - AG2 framework with OpenAI, MCP, and A2A extras
+- `ag2[openai,mcp,a2a]>=0.13.4` - AG2 framework with OpenAI, MCP, and A2A extras
 - `mcp>=1.9.2` - Model Context Protocol SDK (for MCP server)
 - `pydantic-settings` - Settings management from .env
 - `uvicorn` - ASGI server for A2A examples
