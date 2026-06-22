@@ -3,7 +3,7 @@ import json
 
 from dotenv import load_dotenv
 
-from agent_framework import Agent, ClassSkill, SkillsProvider
+from agent_framework import Agent, ClassSkill, SkillFrontmatter, SkillsProvider
 from agent_framework.openai import OpenAIChatClient
 
 from settings import settings
@@ -36,8 +36,10 @@ class UnitConverterSkill(ClassSkill):
 
     def __init__(self) -> None:
         super().__init__(
-            name="unit-converter",
-            description="Convert between common measurement units.",
+            frontmatter=SkillFrontmatter(
+                name="unit-converter",
+                description="Convert between common measurement units.",
+            )
         )
 
     @property
@@ -97,8 +99,8 @@ async def main() -> None:
     print(f"Answer: {result.text}")
 
     # --- 4. Show skill metadata ---
-    print(f"\nSkill name: {skill.name}")
-    print(f"Skill description: {skill.description}")
+    print(f"\nSkill name: {skill.frontmatter.name}")
+    print(f"Skill description: {skill.frontmatter.description}")
     print(f"Resources: {[r.name for r in skill.resources]}")
     print(f"Scripts: {[s.name for s in skill.scripts]}")
 
