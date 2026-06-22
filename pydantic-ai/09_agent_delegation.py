@@ -67,4 +67,4 @@ print(f"Selected joke:\n{result.output}\n")
 
 # Show combined metrics from both agents
 # > The usage includes API calls from both joke_generator and joke_selector
-show_metrics(result.usage())
+show_metrics(result.usage)

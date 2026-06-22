@@ -91,7 +91,7 @@ async def main():
 
     async with agent.iter("Compare temperatures in London and Lisbon.") as run:
         async for node in run:
-            usage = run.usage()
+            usage = run.usage
             print(
                 f"  {type(node).__name__}: "
                 f"requests={usage.requests}, "
@@ -100,7 +100,7 @@ async def main():
             )
 
     result = run.result
-    final_usage = run.usage()
+    final_usage = run.usage
     print(f"\nFinal output: {result.output}")
     print(
         f"Final usage: {final_usage.requests} requests, {final_usage.tool_calls} tool calls"

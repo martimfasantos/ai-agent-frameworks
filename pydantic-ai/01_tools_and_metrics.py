@@ -70,7 +70,7 @@ dice_result = dice_agent.run_sync("My guess is 4", deps="Alice")
 print(f"🎮 Game Result: {dice_result.output}")
 
 # --- 4. Display usage metrics ---
-usage: RunUsage = dice_result.usage()
+usage: RunUsage = dice_result.usage
 show_metrics(usage)  # from utils.py
 
 
@@ -133,7 +133,7 @@ result = weather_agent.run_sync(
     ),
 )
 print(f"   Response: {result.output}")
-print(f"   Tool Calls: {result.usage().tool_calls} tool calls")
+print(f"   Tool Calls: {result.usage.tool_calls} tool calls")
 print("\n" + "=" * 60 + "\n")
 
 
@@ -172,4 +172,4 @@ print(f"\n📋 Message History Analysis:")
 messages = research_result.all_messages()
 
 print_all_messages(messages)  # from utils.py
-show_metrics(research_result.usage())  # from utils.py
+show_metrics(research_result.usage)  # from utils.py

@@ -67,8 +67,8 @@ uv run python 00_hello_world.py
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `pydantic-ai` | 1.104.0 | Core agent framework |
-| `pydantic-ai-slim[a2a]` | 1.104.0 | A2A protocol support (required for `18_a2a.py`) |
+| `pydantic-ai` | 1.107.0 | Core agent framework |
+| `pydantic-ai-slim[a2a]` | 1.107.0 | A2A protocol support (required for `18_a2a.py`) |
 | `pydantic-evals` | >=0.2.0 | Evaluation framework (required for `17_evals.py`) |
 | `pydantic-graph` | >=0.2.0 | Graph/FSM library (required for `14_stateful_graphs.py`, `15_graphs_with_genai.py`) |
 | `pydantic` | >=2.10.0 | Data validation and structured output schemas |

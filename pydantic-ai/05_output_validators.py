@@ -105,7 +105,7 @@ def run_full_output_validation_examples():
     """
 
     # 5.3. Show usage metrics to see retries
-    show_metrics(result2.usage())
+    show_metrics(result2.usage)
 
     # NOTE: When validation fails, the agent makes multiple requests.
     # You'll see requests > 1 when ModelRetry is triggered.
