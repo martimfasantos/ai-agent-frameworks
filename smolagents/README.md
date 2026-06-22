@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/huggingface/smolagents
 - Documentation: https://huggingface.co/docs/smolagents/index
-- Version: **1.24.0**
+- Version: **1.26.0**
 
 ## About smolagents
 
@@ -82,11 +82,12 @@ uv run python 13_advanced_patterns.py
 | 11 | `11_mcp_tools.py` | MCP stdio server integration via `ToolCollection.from_mcp()` |
 | 12 | `12_callbacks_observability.py` | Post-run execution trace with step/tool/error counts |
 | 13 | `13_advanced_patterns.py` | Custom instructions, `final_answer_checks`, step inspection |
+| 14 | `14_gradio_ui.py` | GradioUI for interactive web chat interface |
 
 ## Key dependencies
 
-- `smolagents[toolkit]>=1.24.0` - smolagents with built-in tool support
-- `smolagents[mcp]>=1.24.0` - MCP integration (installs `mcpadapt`)
+- `smolagents[toolkit]>=1.26.0` - smolagents with built-in tool support
+- `smolagents[mcp]>=1.26.0` - MCP integration (installs `mcpadapt`)
 - `litellm` - Multi-provider LLM support (for example 06)
 - `wikipedia-api` - Wikipedia tool backend (for example 02)
 - `pydantic-settings` - Settings management from .env

@@ -660,4 +660,47 @@ Total steps taken: 3
 | 12 | `12_callbacks_observability.py` | PASS | Post-run execution trace with step/tool/error counts |
 | 13 | `13_advanced_patterns.py` | PASS | Custom instructions, final answer checks, step inspection |
 
-**14/14 examples pass.**
+---
+
+## 14_gradio_ui.py
+
+```
+$ uv run python 14_gradio_ui.py
+
+=== Launching Gradio UI ===
+Open http://localhost:7860 in your browser
+Press Ctrl+C to stop
+
+Running on local URL:  http://127.0.0.1:7860
+```
+
+> GradioUI wraps any smolagent in an interactive web chat interface. It supports
+> file uploads (`file_upload_folder`) and memory reset between conversations
+> (`reset_agent_memory=True`). The server blocks until Ctrl+C. Requires `gradio`
+> as an extra dependency (`uv add gradio`).
+
+**Verdict:** PASS - Imports succeed, GradioUI instantiates with file_upload_folder and reset_agent_memory options, launches Gradio server on port 7860
+
+---
+
+## Summary
+
+| # | File | Status | Notes |
+|---|------|--------|-------|
+| 0 | `00_hello_world.py` | PASS | Basic CodeAgent creation and query |
+| 1 | `01_custom_tools.py` | PASS | `@tool` decorator and `Tool` subclass both work |
+| 2 | `02_builtin_tools.py` | PASS | `WikipediaSearchTool` fetches real content |
+| 3 | `03_tool_calling_agent.py` | PASS | `ToolCallingAgent` uses JSON tool calls |
+| 4 | `04_streaming.py` | PASS | `stream=True` emits step events as generator |
+| 5 | `05_multi_agent.py` | PASS | Manager delegates to sub-agents via `managed_agents` |
+| 6 | `06_different_models.py` | PASS | `OpenAIModel` and `LiteLLMModel` swap seamlessly |
+| 7 | `07_memory_management.py` | PASS | Memory inspection, step callbacks, reset |
+| 8 | `08_code_agent_multi_step.py` | PASS | CodeAct: 3 chained steps with persistent variables |
+| 9 | `09_planning.py` | PASS | `planning_interval` triggers facts survey and plan |
+| 10 | `10_text_to_sql.py` | PASS | Natural language to SQL against SQLite |
+| 11 | `11_mcp_tools.py` | PASS | MCP stdio server tools loaded via `ToolCollection.from_mcp()` |
+| 12 | `12_callbacks_observability.py` | PASS | Post-run execution trace with step/tool/error counts |
+| 13 | `13_advanced_patterns.py` | PASS | Custom instructions, final answer checks, step inspection |
+| 14 | `14_gradio_ui.py` | PASS | GradioUI web chat interface with file uploads |
+
+**15/15 examples pass.**
