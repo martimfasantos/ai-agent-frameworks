@@ -46,7 +46,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/ag2.svg" alt="AG2" width="52" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>0.13.2</code></td>
+      <td><code>0.13.4</code></td>
       <td>
           <a href="https://docs.ag2.ai/latest/">
             <picture>
@@ -74,7 +74,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/agno.svg" alt="Agno" width="68" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>2.6.9</code></td>
+      <td><code>2.6.18</code></td>
       <td>
           <a href="https://docs.agno.com/introduction">
             <picture>
@@ -131,7 +131,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
             <img src="res/claude-logo.svg" alt="Claude Agent SDK" width="30" style="vertical-align: middle;">
           </picture>
       <strong style="vertical-align: middle; font-size: 1.2em;">Claude Agent SDK</strong>
-      <td><code>0.1.80</code></td>
+      <td><code>0.2.106</code></td>
       <td>
           <a href="https://platform.claude.com/docs/en/agent-sdk/overview">
             <picture>
@@ -159,7 +159,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/crewai.svg" alt="CrewAI" width="72">
         </picture>
       </td>
-      <td><code>1.14.4</code></td>
+      <td><code>1.14.7</code></td>
       <td>
           <a href="https://docs.crewai.com/">
             <picture>
@@ -188,7 +188,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
         </picture>
     <strong style="vertical-align: middle; font-size: 1.2em;">Google ADK</strong>
       </td>
-      <td><code>2.1.0</code></td>
+      <td><code>2.3.0</code></td>
       <td>
           <a href="https://google.github.io/adk-docs/">
             <picture>
@@ -216,7 +216,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/langchain.svg" alt="LangChain" width="120" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>1.3.0</code></td>
+      <td><code>1.3.10</code></td>
       <td>
           <a href="https://docs.langchain.com/oss/python/langchain/">
             <picture>
@@ -249,7 +249,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/langgraph-text.svg" alt="LangGraph" width="100" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>1.2.0</code></td>
+      <td><code>1.2.6</code></td>
       <td>
           <a href="https://langchain-ai.github.io/langgraph/">
             <picture>
@@ -311,7 +311,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
         </picture>
     <strong style="vertical-align: middle; font-size: 1.2em;">Agent Framework</strong>
       </td>
-      <td><code>1.7.0</code></td>
+      <td><code>1.9.0</code></td>
       <td>
           <a href="https://learn.microsoft.com/en-us/agent-framework/">
             <picture>
@@ -368,7 +368,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/pydantic-ai.svg" alt="Pydantic-AI" width="120" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>1.104.0</code></td>
+      <td><code>1.107.0</code></td>
       <td>
           <a href="https://ai.pydantic.dev/">
             <picture>
@@ -397,7 +397,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
         </picture>
     <strong style="vertical-align: middle; font-size: 1.2em;">smolagents</strong>
       </td>
-      <td><code>1.25.0</code></td>
+      <td><code>1.26.0</code></td>
       <td>
           <a href="https://huggingface.co/docs/smolagents/en/index">
             <picture>
