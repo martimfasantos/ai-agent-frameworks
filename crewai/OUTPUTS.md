@@ -1,6 +1,6 @@
 # CrewAI - Example Outputs
 
-All examples run with `crewai[tools]>=1.14.6` and `gpt-4o-mini` as the model.
+All examples run with `crewai[tools]>=1.14.7` and `gpt-4o-mini` as the model.
 
 > **Note:** LLM responses are non-deterministic. Your outputs will differ in wording but should follow the same structure and demonstrate the same features.
 

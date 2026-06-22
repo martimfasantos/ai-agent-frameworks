@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/crewAIInc/crewAI
 - Documentation: https://docs.crewai.com/
-- Version: **1.14.4**
+- Version: **1.14.7**
 
 ## About CrewAI
 
@@ -106,6 +106,6 @@ uv run python 23_checkpointing.py
 
 ## Key dependencies
 
-- `crewai[tools]>=1.14.4` - CrewAI framework with built-in tools
+- `crewai[tools]>=1.14.7` - CrewAI framework with built-in tools
 - `pydantic>=2.11.7` - Data validation and structured outputs
 - `pydantic-settings>=2.10.1` - Settings management from .env
