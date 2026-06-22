@@ -1,0 +1,52 @@
+name: smoke-test
+
+# Lightweight, key-free CI: for every framework directory, assert the
+# uv lockfile is consistent and installable (`uv sync --frozen`) and that
+# all example files compile against the installed dependencies
+# (`python -m py_compile`). No API keys or network calls to LLM providers
+# are required, so this runs safely on forks and pull requests.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        framework:
+          - ag2
+          - agno
+          - autogen
+          - claude-agents-sdk
+          - crewai
+          - google-adk
+          - langchain
+          - langgraph
+          - llama-index
+          - microsoft-agent-framework
+          - openai-agents-sdk
+          - pydantic-ai
+          - smolagents
+          - strands-agents-sdk
+          - study-agents-differences
+    name: ${{ matrix.framework }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies (frozen lock)
+        working-directory: ${{ matrix.framework }}
+        run: uv sync --frozen
+
+      - name: Compile all example files
+        working-directory: ${{ matrix.framework }}
+        run: uv run --no-sync python -m py_compile *.py
