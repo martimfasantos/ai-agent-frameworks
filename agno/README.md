@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/agno-agi/agno
 - Documentation: https://docs.agno.com
-- Version: **2.6.9**
+- Version: **2.6.18**
 
 ## Agno Examples
 
