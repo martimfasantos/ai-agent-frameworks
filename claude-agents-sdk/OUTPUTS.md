@@ -1,6 +1,6 @@
 # Claude Agent SDK - Example Outputs
 
-All examples run with `claude-agent-sdk>=0.1.80` and the Claude Code CLI. The SDK auto-selects the model via `ANTHROPIC_API_KEY`.
+All examples run with `claude-agent-sdk>=0.2.106` and the Claude Code CLI. The SDK auto-selects the model via `ANTHROPIC_API_KEY`.
 
 > **Note:** LLM responses are non-deterministic. Your outputs will differ in wording but should follow the same structure and demonstrate the same features.
 
@@ -579,3 +579,143 @@ Note: strict_mcp_config=True ensured no project/user/global MCP servers loaded.
 **Verdict:** PASS - Agent runs with only built-in tools; no external MCP servers loaded.
 
 ---
+
+## 18. Thinking Config (`18_thinking_config.py`)
+
+```
+$ uv run python 18_thinking_config.py
+
+=== Example 1: Adaptive Thinking ===
+Response: 2 + 2 = 4
+
+=== Example 2: Thinking Enabled (budget: 2000 tokens) ===
+Response: # The Halting Problem
+
+The halting problem asks a simple-sounding question:
+
+> Can you write a program that looks at any other program and tells you whether
+it will eventually finish running or get stuck looping forever?
+
+The answer, proven by Alan Turing in 1936, is no. It's impossible to build such
+a program...
+
+=== Example 3: Thinking Disabled ===
+Response: Three prime numbers: 2, 3, and 5.
+```
+
+> ThinkingConfig controls extended thinking behavior. In SDK 0.2.x these are
+> TypedDicts that require an explicit `type` discriminator:
+> - `ThinkingConfigAdaptive(type="adaptive")`: model decides whether to think based on complexity
+> - `ThinkingConfigEnabled(type="enabled", budget_tokens=N)`: always think, capped at N tokens
+> - `ThinkingConfigDisabled(type="disabled")`: suppress thinking for faster, cheaper responses
+>
+> Verified live via `query()` against the Claude CLI: all three modes return
+> `ResultMessage(subtype="success")`.
+
+**Verdict:** PASS - All three thinking modes run and return successful results.
+
+---
+
+## 19. Task Budget (`19_task_budget.py`)
+
+```
+$ uv run python 19_task_budget.py
+
+=== Example 1: Dollar Budget Cap ===
+Response: Logic flows like streams—
+a missing semicolon
+halts the universe.
+
+=== Example 2: TaskBudget with Token Limit ===
+Response: # A Brief History of Python
+
+## Origins (late 1980s-1991)
+Python was created by Guido van Rossum at CWI in the Netherlands. He began work
+in December 1989 as a hobby project, designing it as a successor to the ABC
+language...
+
+=== Budget Controls Summary ===
+max_budget_usd:    Hard dollar cap on total API spend
+TaskBudget(total): Total token budget the model paces against
+max_turns:         Maximum agent reasoning iterations
+```
+
+> Budget controls cap agent resource consumption per task:
+> - `max_budget_usd=1.00`: hard dollar ceiling on total API spend (the SDK raises
+>   an error result if the cap trips, so set it above a single task's expected cost)
+> - `TaskBudget(total=25000)`: total token budget the model is made aware of and
+>   paces against. `total` is a token count and must be at least the model minimum
+>   (20,000 tokens for the default model)
+>
+> Verified live via `query()` against the Claude CLI: both examples return
+> `ResultMessage(subtype="success")`.
+
+**Verdict:** PASS - Dollar cap and TaskBudget token budget both run successfully.
+
+---
+
+## 20. Sandbox Settings (`20_sandbox_settings.py`)
+
+```
+$ uv run python 20_sandbox_settings.py
+
+=== Example 1: Sandbox with Network Locked Down ===
+Response: 15 * 23 = 345
+
+=== Example 2: Full Sandbox Configuration ===
+Response: Here are the files in the current directory:
+- 00_hello_world.py
+- 01_built_in_tools.py
+- ...
+- 20_sandbox_settings.py
+- settings.py
+
+=== Sandbox Settings Summary ===
+enabled=True:           Sandbox bash commands (macOS/Linux)
+network.allowedDomains: Whitelist outbound domains ([] blocks all)
+network.deniedDomains:  Always-blocked domains
+Sandboxing prevents data exfiltration and limits blast radius
+```
+
+> SandboxSettings sandboxes bash command execution. In SDK 0.2.x the keys are
+> camelCase and network access is controlled by domain lists (not an `enabled`
+> flag on the network config):
+> - `SandboxSettings(enabled=True, ...)`: enable bash sandboxing (macOS/Linux)
+> - `SandboxNetworkConfig(allowedDomains=[])`: block all outbound domains
+> - `SandboxNetworkConfig(allowedDomains=["api.github.com"])`: whitelist domains
+> - `SandboxNetworkConfig(deniedDomains=[...])`: always-blocked domains
+>
+> Verified live via `query()` against the Claude CLI: both examples return
+> `ResultMessage(subtype="success")`.
+
+**Verdict:** PASS - Sandboxed bash with network domain controls runs successfully.
+
+---
+
+## Summary
+
+| # | File | Status | Notes |
+|---|------|--------|-------|
+| 0 | `00_hello_world.py` | PASS | Basic query with ResultMessage |
+| 1 | `01_basic_tools.py` | PASS | Tool definitions and invocations |
+| 2 | `02_system_prompt.py` | PASS | System prompt configuration |
+| 3 | `03_model_selection.py` | PASS | Haiku/Sonnet/Opus model switching |
+| 4 | `04_structured_output.py` | PASS | JSON schema output validation |
+| 5 | `05_conversations.py` | PASS | Multi-turn conversation state |
+| 6 | `06_custom_tools.py` | PASS | Custom tool registration and dispatch |
+| 7 | `07_sessions.py` | PASS | Session create, resume, fork |
+| 8 | `08_multi_turn.py` | PASS | Context retention across 3 turns |
+| 9 | `09_subagents.py` | PASS | Two subagents delegated via Agent tool |
+| 10 | `10_mcp_servers.py` | PASS | External MCP server integration |
+| 11 | `11_streaming.py` | PASS | Real-time token streaming |
+| 12 | `12_cost_tracking.py` | PASS | Cost, turns, duration, budget, effort |
+| 13 | `13_file_checkpointing.py` | PASS | File checkpoint and rewind |
+| 14 | `14_session_store.py` | PASS | InMemorySessionStore transcript |
+| 15 | `15_deferred_tool_use.py` | PASS | Human-in-the-loop deferral |
+| 16 | `16_hook_events.py` | PASS | Hook event streaming |
+| 17 | `17_strict_mcp.py` | PASS | Strict MCP config isolation |
+| 18 | `18_thinking_config.py` | PASS | Extended thinking modes |
+| 19 | `19_task_budget.py` | PASS | Dollar cap and token budget |
+| 20 | `20_sandbox_settings.py` | PASS | Sandboxed bash with network domain controls |
+
+**21/21 examples pass.**

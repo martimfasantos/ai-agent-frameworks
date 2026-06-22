@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/anthropics/claude-agent-sdk-python
 - Documentation: https://platform.claude.com/docs/en/agent-sdk/overview
-- Version: **0.1.80**
+- Version: **0.2.106**
 
 ## About Claude Agent SDK
 
@@ -94,8 +94,11 @@ uv run python 17_strict_mcp.py
 | 15 | `15_deferred_tool_use.py` | HITL deferred tool use, hook "defer" decision |
 | 16 | `16_hook_events.py` | Hook event streaming, HookEventMessage |
 | 17 | `17_strict_mcp.py` | strict_mcp_config for deterministic tool sets |
+| 18 | `18_thinking_config.py` | Extended thinking: enabled, adaptive, and disabled modes |
+| 19 | `19_task_budget.py` | Dollar cap (max_budget_usd) and TaskBudget token budget for agent spend |
+| 20 | `20_sandbox_settings.py` | SandboxSettings for sandboxed bash with network domain controls |
 
 ## Key dependencies
 
-- `claude-agent-sdk>=0.1.80` - Claude Agent SDK (Python)
+- `claude-agent-sdk>=0.2.106` - Claude Agent SDK (Python)
 - `pydantic-settings` - Settings management from .env
