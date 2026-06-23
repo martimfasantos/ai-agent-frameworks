@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/strands-agents/sdk-python
 - Documentation: https://strandsagents.com/latest/
-- Version: **1.39.0**
+- Version: **1.41.0**
 
 ## About Strands Agents SDK
 
