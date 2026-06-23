@@ -1,6 +1,6 @@
 # AG2 Example Outputs
 
-Captured outputs from running all 16 examples against ag2 v0.12.3 with `gpt-4o-mini`.
+Captured outputs from running all 18 examples against ag2 v0.13.2 with `gpt-4o-mini`.
 
 > These outputs may vary between runs due to LLM non-determinism. The structure and tool invocations should remain consistent.
 
@@ -750,3 +750,44 @@ Total events captured: 3
 
 > The beta Agent's `response_schema` constrains LLM output to match a Pydantic model,
 > guaranteeing parseable structured data.
+
+---
+
+## 16_beta_middleware.py
+
+```
+=== Agent with Middleware Stack ===
+
+  [LoggingMiddleware] LLM call intercepted
+  [LoggingMiddleware] LLM responded
+  [TimingMiddleware] Turn completed in 2.14s
+
+Response: The capital of France is Paris.
+```
+
+> Middlewares intercept agent LLM calls without modifying agent code. `on_llm_call`
+> fires around each model request; `on_turn` wraps the full agent turn. Multiple
+> middlewares compose in stack order.
+
+---
+
+## 17_beta_memory_stream.py
+
+```
+=== Turn 1: Introduce context ===
+Response: Nice to meet you, Alice! How can I assist you today?
+
+=== Turn 2: Test memory ===
+Response: Your name is Alice, and you work at Acme Corp.
+
+=== Memory Stream Contents ===
+Total events in stream: 4
+  [0] ModelRequest: ModelRequest(parts=[TextInput(content='My name is Alice and I work at Acme Corp.')])
+  [1] ModelResponse: ModelResponse(content=Nice to meet you, Alice! How can I assist you today?, ...)
+  [2] ModelRequest: ModelRequest(parts=[TextInput(content='What is my name and where do I work?')])
+  [3] ModelResponse: ModelResponse(content=Your name is Alice, and you work at Acme Corp., ...)
+```
+
+> MemoryStream maintains structured event history across turns. The agent retains
+> context from earlier interactions via the shared stream, and `history.get_events()`
+> returns the full event log for inspection or persistence.

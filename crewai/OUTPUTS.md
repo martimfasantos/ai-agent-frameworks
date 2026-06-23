@@ -1,6 +1,6 @@
 # CrewAI - Example Outputs
 
-All examples run with `crewai[tools]>=1.14.4` and `gpt-4o-mini` as the model.
+All examples run with `crewai[tools]>=1.14.6` and `gpt-4o-mini` as the model.
 
 > **Note:** LLM responses are non-deterministic. Your outputs will differ in wording but should follow the same structure and demonstrate the same features.
 
@@ -758,3 +758,95 @@ Demo checkpoint directories cleaned up.
 > Three checkpoint JSON files were written (one per task completion + crew completion). Forking from the earliest checkpoint successfully created a new execution branch. Agent-level checkpoint event did not produce files in this version but the agent ran successfully.
 
 **Verdict:** PASS - CheckpointConfig with custom location and events, crew checkpointing with 3 saved files, forking from checkpoint to create alternate execution branch, agent-level standalone kickoff with checkpoint config
+
+---
+
+## 24_llm_guardrails.py
+
+```
+=== LLM Guardrail Demo ===
+
+Guardrails applied:
+  1. Factual accuracy (LLM checks for speculation)
+  2. Format validation (LLM checks structure)
+
+Result:
+- **Creation**: Python was created by Guido van Rossum and first released in
+  February 1991, designed for simplicity and readability.
+
+- **Version History**: Major versions include Python 2.0 in 2000, adding list
+  comprehensions, and Python 3.0 in 2008, which was not backward-compatible.
+
+- **Open Source**: Python is open-source, supported by a strong community that
+  contributes to a rich ecosystem of libraries and frameworks.
+
+- **Popularity**: Python is one of the most popular programming languages, widely
+  used in web development, data science, and automation for its versatility.
+
+- **Current Status**: As of October 2023, Python is actively maintained and
+  continues to be a leading choice among developers and researchers.
+
+=== LLMGuardrail vs Function Guardrails ===
+Function guardrails: Code logic (len check, regex, etc.)
+LLMGuardrail:        Natural language criteria, LLM judges output
+Both can be combined on the same task for layered validation.
+```
+
+> LLMGuardrail validates output using natural language criteria instead of code logic.
+> The LLM acts as a judge, checking factual accuracy and format constraints. Both
+> guardrails passed, producing a structured, factual 5-point summary.
+
+**Verdict:** PASS - LLMGuardrail with natural language validation criteria, dual guardrail composition (factual + format), automatic retry on failure
+
+---
+
+## 25_a2a_protocol.py
+
+```
+=== A2A (Agent-to-Agent) Protocol Demo ===
+
+--- A2AClientConfig (connect TO remote agents) ---
+  from crewai.a2a import A2AClientConfig
+  remote_agent = A2AClientConfig(
+      endpoint="http://remote-server/.well-known/agent.json",
+      timeout=30,
+      max_turns=5,
+      fail_fast=True,
+  )
+
+--- A2AServerConfig (expose crew AS an A2A endpoint) ---
+  from crewai.a2a import A2AServerConfig
+  server = A2AServerConfig(
+      name="my-crew-server",
+      description="A CrewAI agent exposed via A2A",
+      version="1.0.0",
+      skills=[...],
+  )
+  # Then run: crewai a2a serve
+
+--- Local Crew (coordinator pattern) ---
+
+Result:
+- **A2A Protocol Definition**: The A2A (Agent-to-Agent) protocol is a communication
+  framework that facilitates interactions between autonomous agents in multi-agent
+  systems, enabling them to share knowledge, negotiate, and coordinate actions.
+
+- **Importance of Interoperability**: By standardizing the way agents communicate,
+  the A2A protocol enhances interoperability among diverse agents, allowing them to
+  work together seamlessly even if developed using different platforms.
+
+- **Enhanced Collaboration and Efficiency**: The protocol fosters collaboration among
+  agents, leading to improved decision-making and problem-solving capabilities.
+
+=== A2A Integration Summary ===
+- CrewAI crews can CALL remote A2A agents (any framework)
+- CrewAI crews can BE CALLED by other A2A clients
+- Protocol handles discovery, auth, streaming, and turns
+- Enables cross-framework orchestration (CrewAI + ADK + LangGraph)
+```
+
+> A2A (Agent-to-Agent) is Google's open protocol for cross-framework agent communication.
+> CrewAI supports both client mode (calling remote agents) and server mode (exposing
+> crews as A2A endpoints). Requires `crewai[a2a]` for full client/server functionality.
+
+**Verdict:** PASS - A2AClientConfig and A2AServerConfig structure demonstration, local crew execution with coordinator pattern, cross-framework interop explanation
