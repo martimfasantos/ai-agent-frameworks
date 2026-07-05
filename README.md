@@ -182,6 +182,35 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
     <tr>
       <td style="vertical-align: middle;">
         <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="res/langchain-dark.svg">
+          <source media="(prefers-color-scheme: light)" srcset="res/langchain.svg">
+          <img src="res/langchain.svg" alt="Deep Agents" width="30" style="vertical-align: middle;">
+        </picture>
+    <strong style="vertical-align: middle; font-size: 1.2em;">Deep Agents</strong>
+      </td>
+      <td><code>0.6.12</code></td>
+      <td>
+          <a href="https://docs.langchain.com/oss/python/deepagents/overview">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="res/book-open-dark.svg">
+              <source media="(prefers-color-scheme: light)" srcset="res/book-open.svg">
+              <img src="res/book-open.svg" alt="Docs" width="20">
+            </picture>
+          </a>
+      </td>
+      <td>
+          <a href="https://github.com/langchain-ai/deepagents">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="res/github-icon-dark.svg">
+              <source media="(prefers-color-scheme: light)" srcset="res/github-icon.svg">
+              <img src="res/github-icon.svg" alt="GitHub" width="20">
+            </picture>
+          </a>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: middle;">
+        <picture>
           <source media="(prefers-color-scheme: dark)" srcset="res/google-adk-dark.svg">
           <source media="(prefers-color-scheme: light)" srcset="res/google-adk.svg">
           <img src="res/google-adk.svg" alt="Google ADK" width="28" style="vertical-align: middle;">
@@ -460,6 +489,7 @@ The repository is organized by framework, with each top-level folder containing 
 - `autogen/`
 - `claude-agents-sdk/`
 - `crewai/`
+- `deepagents/`
 - `google-adk/`
 - `langchain/`
 - `langgraph/`
