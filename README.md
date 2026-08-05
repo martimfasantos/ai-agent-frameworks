@@ -74,7 +74,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/agno.svg" alt="Agno" width="68" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>2.6.18</code></td>
+      <td><code>2.8.7</code></td>
       <td>
           <a href="https://docs.agno.com/introduction">
             <picture>
