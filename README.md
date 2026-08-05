@@ -249,7 +249,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/langgraph-text.svg" alt="LangGraph" width="100" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>1.2.6</code></td>
+      <td><code>1.2.10</code></td>
       <td>
           <a href="https://langchain-ai.github.io/langgraph/">
             <picture>
