@@ -44,6 +44,11 @@ coding_agent = LlmAgent(
 )
 
 # --- 2. Create the orchestrator that uses both agents as tools ---
+# Note: as of ADK 2.6.0 direct use of AgentTool is documented as discouraged.
+# The recommended alternative is to set mode="single_turn" on the specialist and
+# attach it via sub_agents=[...] — ADK then exposes it as a tool automatically
+# and runs it inline in the parent's session. AgentTool is kept here because it
+# is still the explicit, self-contained way to show the agent-as-tool pattern.
 orchestrator = LlmAgent(
     name="orchestrator",
     model=settings.GOOGLE_MODEL_NAME,
