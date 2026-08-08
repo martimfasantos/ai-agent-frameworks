@@ -8,6 +8,7 @@ In this example, we explore Strands Agents SDK with the following features:
 - MCPClient with stdio transport
 - Streamable HTTP and SSE transports
 - Context manager and managed lifecycle patterns
+- continue_on_error, progress_callback and application_name (new in v1.45.0/v1.47.0)
 
 MCP lets you connect to external tool servers using a standard protocol.
 Strands supports stdio, streamable HTTP, and SSE transports. You can pass
@@ -114,7 +115,35 @@ mcp.run()
 '''
 print(server_code)
 
-# --- 6. Summary ---
+# --- 6. Client resilience and observability options ---
+print("--- Example 5: Client Options ---\n")
+
+options_code = '''
+from mcp.client.streamable_http import streamablehttp_client
+from strands import Agent
+from strands.tools.mcp import MCPClient
+
+async def on_progress(progress: float, total: float | None, message: str | None) -> None:
+    """Called for every progress notification the server emits."""
+    print(f"{progress}/{total} {message or ''}")
+
+mcp_client = MCPClient(
+    lambda: streamablehttp_client("http://localhost:8080/mcp"),
+    # Identify this client to the server (shows up in its logs)
+    application_name="strands-examples",
+    # Keep the agent alive when one server in a multi-server setup fails
+    continue_on_error=True,
+    # Receive progress notifications from long-running tools
+    progress_callback=on_progress,
+)
+
+with mcp_client:
+    agent = Agent(tools=[mcp_client])
+    result = agent("Run the long import job.")
+'''
+print(options_code)
+
+# --- 7. Summary ---
 print("--- Summary ---")
 print("MCP transports supported by Strands:")
 print("  - stdio: Local process communication (npx, python, etc.)")
@@ -122,3 +151,5 @@ print("  - streamable HTTP: Remote HTTP-based MCP servers")
 print("  - SSE: Server-Sent Events transport")
 print("\nUsage: Pass MCPClient to Agent(tools=[mcp_client])")
 print("The agent auto-discovers all tools from the MCP server.")
+print("\nClient options: application_name, continue_on_error, progress_callback,")
+print("elicitation_callback, tool_filters, prefix, startup_timeout.")

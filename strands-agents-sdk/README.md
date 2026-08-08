@@ -1,8 +1,8 @@
 # Strands Agents SDK
 
-- Repo: https://github.com/strands-agents/sdk-python
-- Documentation: https://strandsagents.com/latest/
-- Version: **1.41.0**
+- Repo: https://github.com/strands-agents/harness-sdk
+- Documentation: https://strandsagents.com/docs/
+- Version: **1.50.2**
 
 ## About Strands Agents SDK
 
@@ -14,8 +14,13 @@ Key features:
 - **Class-based tools** - OOP tools with shared state
 - **Structured output** - Pydantic model responses
 - **Multi-agent patterns** - Agents-as-tools (with `as_tool()`), swarm, graph, workflow orchestration
-- **Hooks** - Lifecycle event hooks for monitoring and control
-- **Conversation management** - Sliding window, summarizing, and null managers
+- **Hooks** - Lifecycle event hooks for monitoring and control, with `HookOrder` priorities
+- **Interventions** - Typed `Proceed`/`Deny`/`Guide`/`Transform` decisions for guardrails and authorization
+- **Human-in-the-loop** - `HumanInTheLoop` approval gate with interrupt/resume
+- **Memory** - `MemoryManager` cross-session fact extraction and recall
+- **Invocation limits** - Per-request `turns` / `output_tokens` / `total_tokens` budget caps
+- **Goal loop** - Validate-and-retry plugin with an LLM judge or a programmatic validator
+- **Conversation management** - Sliding window, summarizing, and null managers, plus `context_manager="auto"`
 - **A2A protocol** - Agent-to-Agent communication standard
 - **MCP tools** - Model Context Protocol integration
 - **Skills/plugins** - Composable agent skill bundles
@@ -69,6 +74,11 @@ uv run python 15_mcp_tools.py
 uv run python 16_skills_plugin.py
 uv run python 17_session_persistence.py
 uv run python 18_context_compression.py
+uv run python 19_interventions.py
+uv run python 20_human_in_the_loop.py
+uv run python 21_agent_memory.py
+uv run python 22_invocation_limits.py
+uv run python 23_goal_loop.py
 ```
 
 ## Examples
@@ -84,19 +94,24 @@ uv run python 18_context_compression.py
 | 6 | `06_streaming_and_callbacks.py` | Custom callback handlers and async streaming |
 | 7 | `07_metrics_and_observability.py` | AgentResult metrics, token usage, tool call stats |
 | 8 | `08_class_based_tools.py` | Class-based tools with shared state (TaskManager) |
-| 9 | `09_hooks.py` | Lifecycle hooks: before/after invocation, before/after tool call |
-| 10 | `10_conversation_management.py` | SlidingWindow, Summarizing, and Null conversation managers |
+| 9 | `09_hooks.py` | Lifecycle hooks: before/after invocation, before/after tool call, `HookOrder` |
+| 10 | `10_conversation_management.py` | SlidingWindow, Summarizing, and Null conversation managers, `pin_first` |
 | 11 | `11_multi_agent_swarm.py` | Swarm multi-agent orchestration with handoffs |
 | 12 | `12_multi_agent_graph.py` | Graph-based DAG agent orchestration |
 | 13 | `13_multi_agent_workflow.py` | Workflow tool for sequential multi-step pipelines |
 | 14 | `14_a2a_agent.py` | Agent-to-Agent (A2A) protocol communication |
-| 15 | `15_mcp_tools.py` | Model Context Protocol (MCP) tool integration |
+| 15 | `15_mcp_tools.py` | Model Context Protocol (MCP) tool integration, client options |
 | 16 | `16_skills_plugin.py` | AgentSkills plugin with programmatic Skill creation |
 | 17 | `17_session_persistence.py` | FileSessionManager for state and conversation persistence |
-| 18 | `18_context_compression.py` | Proactive context compression with SummarizingConversationManager |
+| 18 | `18_context_compression.py` | Proactive compression, `context_manager="auto"` / `"agentic"` |
+| 19 | `19_interventions.py` | `InterventionHandler` with `Proceed` / `Deny` / `Guide` / `Transform` |
+| 20 | `20_human_in_the_loop.py` | `HumanInTheLoop` approval gate, interrupt/resume, custom async `ask` |
+| 21 | `21_agent_memory.py` | `MemoryManager` + `TestMemoryStore`, cross-session recall and extraction |
+| 22 | `22_invocation_limits.py` | Per-invocation `turns` / `output_tokens` / `total_tokens` caps |
+| 23 | `23_goal_loop.py` | `GoalLoop` validate-and-retry with an LLM judge and a programmatic validator |
 
 ## Key dependencies
 
-- `strands-agents>=1.39.0` - Strands Agents SDK
-- `strands-agents-tools>=0.5.2` - Community tools (calculator, current_time, shell, etc.)
+- `strands-agents>=1.47.0` - Strands Agents SDK (locked at 1.50.2)
+- `strands-agents-tools>=0.5.2` - Community tools (calculator, current_time, shell, etc.) (locked at 0.8.5)
 - `pydantic-settings` - Settings management from .env

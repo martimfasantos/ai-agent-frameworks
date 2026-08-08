@@ -1,0 +1,25 @@
+[
+  {
+    "id": "aa7f4cc3-6592-4e37-ae7f-b2577aba6f8d",
+    "content": "User prefers metric units.",
+    "createdAt": "2026-08-08T01:35:01.171Z"
+  },
+  {
+    "id": "10826cb4-a02a-4341-9d31-228c3092ddc8",
+    "content": "User's team ships releases on Tuesdays.",
+    "createdAt": "2026-08-08T01:35:01.171Z"
+  },
+  {
+    "id": "bf5992e0-ae4b-4a9d-8cf9-85f7a7d0eef4",
+    "content": "User is based in Lisbon.",
+    "createdAt": "2026-08-08T01:35:06.306Z"
+  },
+  {
+    "id": "a1985dd8-50b4-480a-bcd2-b27295d4e583",
+    "content": "The on-call rotation handover happens every Monday at 09:00 WET.",
+    "createdAt": "2026-08-08T01:35:09.041Z",
+    "metadata": {
+      "source": "runbook"
+    }
+  }
+]

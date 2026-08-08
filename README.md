@@ -425,9 +425,9 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/strands-amazon-sdk.svg" alt="Strands Agents SDK" width="120" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>1.41.0</code></td>
+      <td><code>1.50.2</code></td>
       <td>
-          <a href="https://strandsagents.com/latest/">
+          <a href="https://strandsagents.com/docs/">
             <picture>
               <source media="(prefers-color-scheme: dark)" srcset="res/book-open-dark.svg">
               <source media="(prefers-color-scheme: light)" srcset="res/book-open.svg">
@@ -436,7 +436,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           </a>
       </td>
       <td>
-          <a href="https://github.com/strands-agents/sdk-python">
+          <a href="https://github.com/strands-agents/harness-sdk">
             <picture>
               <source media="(prefers-color-scheme: dark)" srcset="res/github-icon-dark.svg">
               <source media="(prefers-color-scheme: light)" srcset="res/github-icon.svg">

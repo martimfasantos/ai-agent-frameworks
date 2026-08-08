@@ -16,10 +16,14 @@ In this example, we explore Strands Agents with the following features:
 - Proactive context compression (new in v1.40.0)
 - SummarizingConversationManager with ProactiveCompressionConfig
 - Automatic conversation summarization to stay within token limits
+- The context_manager="auto" / "agentic" shortcut (new in v1.43.0)
+- Override precedence between context_manager and conversation_manager
 
 Proactive compression monitors token usage during conversation
 and automatically compresses older messages when a threshold is
 reached, without waiting for context window overflow errors.
+context_manager="auto" is the one-word shortcut for the same setup,
+composing a summarizing manager with a ContextOffloader plugin.
 
 For more details, visit:
 https://strandsagents.com/docs/user-guide/concepts/agents/conversation-management/
@@ -83,3 +87,41 @@ messages = agent.messages
 print(f"=== Conversation State ===")
 print(f"  Total messages in context: {len(messages)}")
 print(f"  (Proactive compression keeps context manageable across long conversations)")
+print()
+
+# --- 5. The same setup in one word: context_manager="auto" ---
+print("=== context_manager Shortcut ===")
+
+auto_agent = Agent(
+    model=openai_model,
+    context_manager="auto",
+    callback_handler=null_callback_handler,
+)
+print('context_manager="auto" composes, with benchmark-validated defaults:')
+print(f"  conversation_manager: {type(auto_agent.conversation_manager).__name__}")
+print(f"  summary_ratio: {auto_agent.conversation_manager.summary_ratio}")
+print(f"  preserve_recent_messages: {auto_agent.conversation_manager.preserve_recent_messages}")
+print(f"  ContextOffloader plugin tools: {auto_agent.tool_names}")
+print()
+
+# "agentic" hands the compression decisions to the model instead
+agentic_agent = Agent(
+    model=openai_model,
+    context_manager="agentic",
+    callback_handler=null_callback_handler,
+)
+print('context_manager="agentic" lets the model manage its own context:')
+print(f"  tools: {agentic_agent.tool_names}")
+print()
+
+# --- 6. Override precedence: an explicit conversation_manager wins ---
+override_agent = Agent(
+    model=openai_model,
+    context_manager="auto",
+    conversation_manager=conversation_manager,  # the hand-built manager from step 1
+    callback_handler=null_callback_handler,
+)
+print('context_manager="auto" + an explicit conversation_manager:')
+print(f"  preserve_recent_messages: {override_agent.conversation_manager.preserve_recent_messages}"
+      " (yours wins over the auto default of 10)")
+print(f"  tools: {override_agent.tool_names} (the offloader is still added)")

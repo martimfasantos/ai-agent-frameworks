@@ -14,11 +14,14 @@ In this example, we explore Strands Agents SDK with the following features:
 - NullConversationManager (no history management)
 - SlidingWindowConversationManager (fixed window of recent turns)
 - SummarizingConversationManager (auto-summarize older context)
+- pin_first=N to protect the first N messages from truncation (new in v1.43.0)
 
 Conversation managers control how the agent's message history grows.
 The default SlidingWindowConversationManager keeps a fixed window of
 recent messages. SummarizingConversationManager compresses older turns
 into a summary. NullConversationManager disables all history management.
+pin_first is available on both managers and keeps early instructions or
+reference data in context no matter how long the conversation gets.
 
 For more details, visit:
 https://strandsagents.com/docs/user-guide/concepts/agents/conversation-management/
@@ -100,4 +103,32 @@ summarizing_agent("The capital of Japan is Tokyo.")
 summarizing_agent("The capital of Brazil is Brasilia.")
 result = summarizing_agent("List all the capitals I mentioned.")
 print(f"Summarizing result: {result.message}")
-print(f"Messages in history: {len(summarizing_agent.messages)}")
+print(f"Messages in history: {len(summarizing_agent.messages)}\n")
+
+# --------------------------------------------------------------
+# Example 4: pin_first — protecting early messages from truncation
+# --------------------------------------------------------------
+print("=== Example 4: pin_first ===\n")
+
+# --- 6. A tight window that would normally drop the opening instruction ---
+pinned_agent = Agent(
+    model=openai_model,
+    system_prompt="You are a helpful assistant. Be concise.",
+    conversation_manager=SlidingWindowConversationManager(
+        window_size=6,
+        pin_first=1,  # the first message is never truncated away
+    ),
+    callback_handler=None,
+)
+
+pinned_agent("Our project code name is FALCON-9. Remember it.")
+pinned_agent("What is 2 + 2?")
+pinned_agent("Name a colour.")
+pinned_agent("Name a fruit.")
+result = pinned_agent("What is our project code name?")
+
+# --- 7. The pinned opening message survived the sliding window ---
+first_message = pinned_agent.messages[0]["content"][0]["text"]
+print(f"Messages in history: {len(pinned_agent.messages)} (window_size=6)")
+print(f"Message[0] still pinned: {first_message!r}")
+print(f"Recall result: {result.message['content'][0]['text']}")
