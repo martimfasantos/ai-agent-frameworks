@@ -77,26 +77,20 @@ async def main() -> None:
     )
 
     # --- 3. Build and run a sequential orchestration ---
-    sequential = SequentialBuilder(participants=[researcher, planner]).build()
+    # output_from="all" is required to see every stage: since orchestrations
+    # 1.0.x the default yields only the last participant's response.
+    sequential = SequentialBuilder(
+        participants=[researcher, planner], output_from="all"
+    ).build()
 
     result: WorkflowRunResult = await sequential.run("Plan a trip to Lisbon, Portugal.")
 
-    # Sequential orchestration returns a single output containing a list of
-    # Messages — the original user input followed by each agent's response.
-    # We extract the agent responses (skipping the user input at index 0).
+    # One AgentResponse per participant, in pipeline order.
     outputs = result.get_outputs()
     stage_names = ["Researcher", "Planner"]
-    for output in outputs:
-        if isinstance(output, list):
-            # Filter to assistant messages only (skip the initial user message)
-            agent_msgs = [m for m in output if getattr(m, "role", None) == "assistant"]
-            for i, msg in enumerate(agent_msgs):
-                label = stage_names[i] if i < len(stage_names) else f"Stage {i + 1}"
-                print(f"{label}:\n{msg.text}\n")
-        elif hasattr(output, "text"):
-            print(f"Output:\n{output.text}\n")
-        else:
-            print(f"Output:\n{output}\n")
+    for i, output in enumerate(outputs):
+        label = stage_names[i] if i < len(stage_names) else f"Stage {i + 1}"
+        print(f"{label}:\n{output.text}\n")
 
     # --------------------------------------------------------------
     # Example 2: Handoff Orchestration

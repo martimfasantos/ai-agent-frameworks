@@ -5,7 +5,8 @@
 
 Microsoft Agent Framework is an open-source SDK for building, orchestrating, and deploying AI agents and multi-agent workflows. It unifies the capabilities of AutoGen and Semantic Kernel, providing a comprehensive platform for creating intelligent agents with tool use, middleware, sessions, structured outputs, MCP integration, and graph-based workflows with human-in-the-loop support.
 
-> **Note:** The framework is currently in public preview (RC). APIs may change before the 1.0 stable release.
+> **Note:** The core packages are stable, but several surfaces used here (skills, the agent harness, file memory,
+> MCP progressive disclosure) are still marked experimental and emit an `ExperimentalWarning` at runtime.
 
 ## Setup
 
@@ -62,15 +63,19 @@ uv run python 00_hello_world.py
 | `19_class_skill.py` | ClassSkill | Class-based skills with `@ClassSkill.resource` and `@ClassSkill.script` |
 | `20_prompt_injection_defense.py` | Prompt Injection Defense | FIDES information-flow control with integrity and confidentiality labels |
 | `21_harness_agent.py` | Harness Agent | Batteries-included agent with memory, todos, modes, and compaction |
+| `22_file_memory.py` | File Memory | Cross-session recall via `FileMemoryProvider` and a scoped file store |
+| `23_message_injection.py` | Message Injection | Nudge a running agent mid-turn with `enqueue_messages` |
+| `24_mcp_progressive_disclosure.py` | MCP Progressive Disclosure | Load and unload MCP tool schemas on demand, bounded by `allowed_tools` |
+| `25_workflow_checkpoints.py` | Workflow Checkpoints | Resume a crashed workflow from its last superstep checkpoint (no LLM calls) |
 
 ## Key dependencies
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `agent-framework` | 1.9.0 | Core framework (agents, tools, middleware, workflows) |
-| `agent-framework-core` | 1.9.0 | Core abstractions and base classes |
-| `agent-framework-declarative` | 1.0.0b260409 | YAML/JSON declarative agent definitions |
-| `agent-framework-orchestrations` | 1.0.0b260409 | Sequential and Handoff orchestration builders |
+| `agent-framework` | 1.13.0 | Core framework (agents, tools, middleware, workflows) |
+| `agent-framework-core` | 1.13.0 | Core abstractions and base classes |
+| `agent-framework-declarative` | 1.0.1 | YAML/JSON declarative agent definitions |
+| `agent-framework-orchestrations` | 1.0.2 | Sequential and Handoff orchestration builders |
 | `pydantic` | >=2.0 | Structured output schemas |
 | `pydantic-settings` | >=2.0 | `.env` file loading via `BaseSettings` |
 | `python-dotenv` | >=1.0 | Explicit `.env` loading (framework does not auto-load) |
@@ -80,5 +85,9 @@ uv run python 00_hello_world.py
 
 - The framework does **not** auto-load `.env` files. Every example calls `load_dotenv()` explicitly.
 - Examples 05 and 13 require `OpenAIResponsesClient` (Responses API) rather than `OpenAIChatClient`.
-- Example 09 requires Node.js / `npx` for the MCP filesystem server.
+- Example 09 requires Node.js / `npx` for the MCP filesystem server. Example 24 does not — it launches its own
+  Python MCP stdio server as a child process.
 - Example 18 requires the system `graphviz` package for PNG export (`brew install graphviz` on macOS).
+- Example 22 writes memory files to `res/agent-file-memory/`; example 25 makes no LLM calls at all.
+- **Telemetry:** since v1.13.0 the framework emits process-wide feature-usage telemetry and reports a first-party
+  `User-Agent` from every package. This is new outbound metadata compared with v1.9.0.

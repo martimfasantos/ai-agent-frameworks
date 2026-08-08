@@ -76,8 +76,16 @@ async def main() -> None:
         api_key=settings.OPENAI_API_KEY.get_secret_value(),
     )
 
+    # Since v1.10.0 every SkillsProvider tool registers with
+    # approval_mode="always_require": without these opt-outs the run returns
+    # approval requests in result.user_input_requests instead of an answer.
     skill = UnitConverterSkill()
-    skills_provider = SkillsProvider(source=skill)
+    skills_provider = SkillsProvider(
+        source=skill,
+        disable_load_skill_approval=True,
+        disable_read_skill_resource_approval=True,
+        disable_run_skill_script_approval=True,
+    )
 
     agent = Agent(
         client=client,

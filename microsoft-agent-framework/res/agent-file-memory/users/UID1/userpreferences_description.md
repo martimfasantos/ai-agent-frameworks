@@ -1,0 +1,1 @@
+User preferences regarding diet and travel companions.

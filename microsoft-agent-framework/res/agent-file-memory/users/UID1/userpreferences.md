@@ -1,0 +1,1 @@
+User is vegetarian and always travels with their dog.
