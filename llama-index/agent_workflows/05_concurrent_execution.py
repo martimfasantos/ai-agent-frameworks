@@ -1,23 +1,28 @@
 import asyncio
 import random
+from typing import Annotated
+
 from workflows import Workflow, Context, step
+from workflows.collect import Collect, Take
 from workflows.events import Event, StartEvent, StopEvent
 
 
 """
 -------------------------------------------------------
 In this example, we explore LlamaIndex Workflows with the following features:
-- Emitting multiple events with ctx.send_event()
+- Fanning out by returning a list of events from a step (-> list[QueryEvent])
+- Fanning in by accepting a list of events in a step (events: list[ResultEvent])
+- Partial collection with Annotated[list[E], Collect(Take(n))]
+- Declaring multiple single-event parameters to join different event types
 - Running steps concurrently with num_workers
-- Collecting events with ctx.collect_events()
-- Waiting for multiple different event types
+- The dynamic API: ctx.send_event() / ctx.collect_events()
 
-Workflows can run steps concurrently when you have multiple independent
-operations. Use ctx.send_event() to emit multiple events from a single
-step, triggering parallel workers. The num_workers parameter on @step
-controls how many instances run concurrently (default: 4). Use
-ctx.collect_events() to wait until all parallel results arrive before
-proceeding. You can also collect different event types together.
+Workflows run steps concurrently when a step emits several events at once.
+The declarative way to do this is to return `list[SomeEvent]` (fan-out) and to
+accept `list[SomeEvent]` (fan-in) — the runtime buffers the branch until every
+event has arrived, so no manual bookkeeping is needed. When the number of
+events is only known at runtime, the dynamic ctx.send_event()/ctx.collect_events()
+API is still available.
 
 For more details, visit:
 https://developers.llamaindex.ai/python/llamaagents/workflows/concurrent_execution/
@@ -25,69 +30,57 @@ https://developers.llamaindex.ai/python/llamaagents/workflows/concurrent_executi
 """
 
 
-# --- 1. Emitting multiple events with ctx.send_event() ---
 class QueryEvent(Event):
     query: str
 
 
-class QueryResultEvent(Event):
+class ResultEvent(Event):
     result: str
 
 
-class SimpleParallelWorkflow(Workflow):
+async def run_query(query: str) -> str:
+    """Simulates a slow, independent unit of work"""
+    delay = random.uniform(0.2, 1.0)
+    await asyncio.sleep(delay)
+    return f"{query} done in {delay:.1f}s"
+
+
+# --- 1. Fan out with -> list[E], fan in with events: list[E] ---
+class FanOutFanInWorkflow(Workflow):
     @step
-    async def start(self, ctx: Context, ev: StartEvent) -> QueryEvent | None:
-        """Emit multiple events to trigger parallel processing"""
-        ctx.send_event(QueryEvent(query="Query 1"))
-        ctx.send_event(QueryEvent(query="Query 2"))
-        ctx.send_event(QueryEvent(query="Query 3"))
-        return None
+    async def start(self, ev: StartEvent) -> list[QueryEvent]:
+        """Returning a list fans out — one branch per event"""
+        return [QueryEvent(query=f"Query {c}") for c in "ABC"]
 
     @step(num_workers=4)  # Run up to 4 instances of this step concurrently
-    async def process_query(self, ctx: Context, ev: QueryEvent) -> StopEvent:
-        """Process queries concurrently (up to 4 at a time)"""
-        delay = random.uniform(0.5, 2.0)
-        await asyncio.sleep(delay)
-        # Note: without collect_events, the first StopEvent ends the workflow
-        return StopEvent(result=f"{ev.query} completed in {delay:.1f}s")
+    async def process(self, ev: QueryEvent) -> ResultEvent:
+        return ResultEvent(result=await run_query(ev.query))
 
-
-# --- 2. Collecting events before proceeding using ctx.collect_events() ---
-class CollectedResultEvent(Event):
-    result: str
-
-
-class CollectingWorkflow(Workflow):
     @step
-    async def start(self, ctx: Context, ev: StartEvent) -> QueryEvent | None:
-        """Emit 3 events for parallel processing"""
-        ctx.send_event(QueryEvent(query="Query A"))
-        ctx.send_event(QueryEvent(query="Query B"))
-        ctx.send_event(QueryEvent(query="Query C"))
-        return None
+    async def collect_all(self, events: list[ResultEvent]) -> StopEvent:
+        """Accepting a list fans in — this fires once, with all 3 results"""
+        return StopEvent(result=[e.result for e in events])
+
+
+# --- 2. Partial collection: stop as soon as N events arrive ---
+class TakeFirstWorkflow(Workflow):
+    @step
+    async def start(self, ev: StartEvent) -> list[QueryEvent]:
+        return [QueryEvent(query=f"Query {i}") for i in range(1, 4)]
 
     @step(num_workers=4)
-    async def process(self, ctx: Context, ev: QueryEvent) -> CollectedResultEvent:
-        """Process each query concurrently"""
-        delay = random.uniform(0.5, 2.0)
-        await asyncio.sleep(delay)
-        return CollectedResultEvent(result=f"{ev.query} done in {delay:.1f}s")
+    async def process(self, ev: QueryEvent) -> ResultEvent:
+        return ResultEvent(result=await run_query(ev.query))
 
     @step
-    async def collect_all(
-        self, ctx: Context, ev: CollectedResultEvent
-    ) -> StopEvent | None:
-        """Wait for all 3 results before continuing"""
-        results = ctx.collect_events(ev, [CollectedResultEvent] * 3)
-        if results is None:
-            return None  # Not all events received yet
-
-        # All 3 events collected — process together
-        all_results = [r.result for r in results]
-        return StopEvent(result=f"All done: {all_results}")
+    async def first_to_finish(
+        self, events: Annotated[list[ResultEvent], Collect(Take(1))]
+    ) -> StopEvent:
+        """Collect(Take(1)) fires on the first result instead of waiting for all"""
+        return StopEvent(result=events[0].result)
 
 
-# --- 3. Collecting multiple different event types ---
+# --- 3. Joining different event types with multiple parameters ---
 class TaskAEvent(Event):
     query: str
 
@@ -106,50 +99,65 @@ class TaskBDoneEvent(Event):
 
 class MultiTypeWorkflow(Workflow):
     @step
-    async def start(
-        self, ctx: Context, ev: StartEvent
-    ) -> TaskAEvent | TaskBEvent | None:
-        """Emit different event types for different processing paths"""
-        ctx.send_event(TaskAEvent(query="Task A"))
-        ctx.send_event(TaskBEvent(query="Task B"))
-        return None
+    async def start(self, ev: StartEvent) -> list[TaskAEvent | TaskBEvent]:
+        return [TaskAEvent(query="Task A"), TaskBEvent(query="Task B")]
 
     @step
-    async def handle_a(self, ctx: Context, ev: TaskAEvent) -> TaskADoneEvent:
+    async def handle_a(self, ev: TaskAEvent) -> TaskADoneEvent:
         await asyncio.sleep(0.5)
         return TaskADoneEvent(result=f"{ev.query} completed")
 
     @step
-    async def handle_b(self, ctx: Context, ev: TaskBEvent) -> TaskBDoneEvent:
+    async def handle_b(self, ev: TaskBEvent) -> TaskBDoneEvent:
         await asyncio.sleep(0.8)
         return TaskBDoneEvent(result=f"{ev.query} completed")
 
     @step
-    async def collect_all(
-        self, ctx: Context, ev: TaskADoneEvent | TaskBDoneEvent
-    ) -> StopEvent | None:
-        """Wait for both different event types"""
-        results = ctx.collect_events(ev, [TaskADoneEvent, TaskBDoneEvent])
+    async def join(self, a: TaskADoneEvent, b: TaskBDoneEvent) -> StopEvent:
+        """One parameter per event type — fires once both have arrived"""
+        return StopEvent(result=f"Both done: {[a.result, b.result]}")
+
+
+# --- 4. Dynamic API: when the fan-out width is only known at runtime ---
+class DynamicWorkflow(Workflow):
+    @step
+    async def start(self, ctx: Context, ev: StartEvent) -> QueryEvent | None:
+        """ctx.send_event() emits events one at a time; return None to emit nothing"""
+        queries = ev.get("queries", [])
+        await ctx.store.set("expected", len(queries))
+        for query in queries:
+            ctx.send_event(QueryEvent(query=query))
+        return None
+
+    @step(num_workers=4)
+    async def process(self, ev: QueryEvent) -> ResultEvent:
+        return ResultEvent(result=await run_query(ev.query))
+
+    @step
+    async def collect_all(self, ctx: Context, ev: ResultEvent) -> StopEvent | None:
+        """collect_events() buffers and returns None until the quota is met"""
+        expected = await ctx.store.get("expected")
+        results = ctx.collect_events(ev, [ResultEvent] * expected)
         if results is None:
             return None
-        return StopEvent(result=f"Both done: {[r.result for r in results]}")
+        return StopEvent(result=[r.result for r in results])
 
 
-# --- 4. Run all workflows ---
+# --- 5. Run all workflows ---
 async def main():
-    print("=== Simple Parallel (first-to-finish wins) ===")
-    w1 = SimpleParallelWorkflow(timeout=30, verbose=False)
-    result = await w1.run()
-    print(f"Result: {result}\n")
+    print("=== Fan out / fan in with list[Event] ===")
+    print(f"Result: {await FanOutFanInWorkflow(timeout=30).run()}\n")
 
-    print("=== Collecting All Events ===")
-    w2 = CollectingWorkflow(timeout=30, verbose=False)
-    result = await w2.run()
-    print(f"Result: {result}\n")
+    print("=== Partial collection with Collect(Take(1)) ===")
+    print(f"Result: {await TakeFirstWorkflow(timeout=30).run()}\n")
 
-    print("=== Multiple Event Types ===")
-    w3 = MultiTypeWorkflow(timeout=30, verbose=False)
-    result = await w3.run()
+    print("=== Joining different event types ===")
+    print(f"Result: {await MultiTypeWorkflow(timeout=30).run()}\n")
+
+    print("=== Dynamic API (runtime fan-out width) ===")
+    result = await DynamicWorkflow(timeout=30).run(
+        queries=["Query X", "Query Y", "Query Z", "Query W"]
+    )
     print(f"Result: {result}")
 
 

@@ -32,14 +32,14 @@ llm = OpenAI(
 research_agent = FunctionAgent(
     llm=llm,
     tools=[],
-    verbose=True,
+    verbose=False,  # step logging became functional in workflows 2.15.0
     system_prompt="You are a research assistant. Provide detailed notes on any topic."
 )
 
 write_agent = FunctionAgent(
     llm=llm,
     tools=[],
-    verbose=True,
+    verbose=False,  # step logging became functional in workflows 2.15.0
     system_prompt="You are a writing assistant. Write clear and concise summaries based on research notes."
 )
 
