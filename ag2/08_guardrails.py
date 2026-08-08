@@ -1,7 +1,14 @@
+import asyncio
 import os
+import re
 
-from autogen import ConversableAgent, GroupChat, GroupChatManager, LLMConfig
-from autogen.agentchat.group.safeguards import apply_safeguard_policy
+from ag2 import Agent, Context, tool
+from ag2.config import OpenAIConfig
+from ag2.events import BaseEvent, HaltEvent, ObserverAlert, Severity, ToolCallEvent
+from ag2.observers import BaseObserver
+from ag2.policies import AlertPolicy
+from ag2.stream import MemoryStream
+from ag2.watch import EventWatch
 
 from settings import settings
 
@@ -10,111 +17,99 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 """
 -------------------------------------------------------
 In this example, we explore AG2 with the following features:
-- Guardrails using AG2's safeguard policy system (Maris)
-- Regex-based content filtering between agents
-- Inter-agent safeguards with block and warn actions
+- A custom BaseObserver watching tool calls via EventWatch
+- ObserverAlert(severity=FATAL) to signal a hard-stop condition
+- AlertPolicy in assembly= turning that alert into a HaltEvent
 
-AG2's safeguard system (Maris) lets you define policies
-that filter or block agent messages based on regex patterns
-or LLM-based checks. This protects against sensitive data
-leakage, harmful content, or policy violations in multi-agent
-conversations.
+The classic Maris safeguard policies were removed in AG2 1.0. The
+1.0 guardrail shape is an observer plus a policy: the observer
+inspects events and raises an ObserverAlert, AlertPolicy converts a
+FATAL alert into a HaltEvent, and the auto-wired halt middleware
+short-circuits the next LLM call. Note this halts the turn rather
+than vetoing the call — the tool still runs, but its result never
+reaches the model. Use tool middleware when you need a hard veto.
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/use-cases/notebooks/notebooks/agentchat_safeguard_demo/
+https://github.com/ag2ai/ag2/blob/v1.0.1/website/docs/user-guide/code_examples/08_safety_guard.mdx
 -------------------------------------------------------
 """
 
-# --- 1. Configure LLM ---
-llm_config = LLMConfig({"model": settings.OPENAI_MODEL_NAME})
+SSN_PATTERN = re.compile(r"\b\d{3}-\d{2}-\d{4}\b")
 
-# --- 2. Create agents for a group chat ---
-assistant = ConversableAgent(
-    name="assistant",
-    system_message=(
-        "You are a helpful assistant. When asked about a topic, provide "
-        "useful information. Always be helpful and informative."
-    ),
-    llm_config=llm_config,
-    human_input_mode="NEVER",
-)
 
-reviewer = ConversableAgent(
-    name="reviewer",
-    system_message=(
-        "You are a content reviewer. After the assistant responds, "
-        "summarize the key points in 1-2 sentences. End with APPROVE."
-    ),
-    llm_config=llm_config,
-    human_input_mode="NEVER",
-)
+# --- 1. The tool under supervision (simulated, never leaves the process) ---
+@tool
+def send_to_crm(record: str) -> str:
+    """Push a customer record to the external CRM system."""
+    return f"[ok] pushed {len(record)} chars to the CRM"
 
-user = ConversableAgent(
-    name="user",
-    human_input_mode="NEVER",
-    llm_config=False,
-    is_termination_msg=lambda x: "APPROVE" in (x.get("content", "") or ""),
-)
 
-# --- 3. Create group chat with GroupChatManager ---
-groupchat = GroupChat(
-    agents=[user, assistant, reviewer],
-    messages=[],
-    max_round=4,
-    send_introductions=False,
-)
+# --- 2. The guardrail: an observer that inspects every tool call ---
+class PiiGuardian(BaseObserver):
+    """Emits a FATAL alert when a tool call carries an SSN-like value."""
 
-manager = GroupChatManager(
-    groupchat=groupchat,
-    llm_config=llm_config,
-)
+    def __init__(self) -> None:
+        super().__init__("pii-guardian", watch=EventWatch(ToolCallEvent))
 
-# --- 4. Define safeguard policy ---
-# Inter-agent safeguards monitor messages between agents.
-# - Block messages containing SSN-like patterns (e.g., 123-45-6789)
-# - Warn on messages containing sensitive keywords
-safeguard_policy = {
-    "inter_agent_safeguards": {
-        "agent_transitions": [
-            {
-                "message_source": "assistant",
-                "message_destination": "reviewer",
-                "check_method": "regex",
-                "pattern": r"\b\d{3}-\d{2}-\d{4}\b",
-                "action": "block",
-            },
-            {
-                "message_source": "assistant",
-                "message_destination": "user",
-                "check_method": "regex",
-                "pattern": r"(?i)\b(password|secret|credential)\b",
-                "action": "warning",
-            },
-        ]
-    },
-}
+    async def process(
+        self, events: list[BaseEvent], ctx: Context
+    ) -> ObserverAlert | None:
+        for event in events:
+            if isinstance(event, ToolCallEvent) and SSN_PATTERN.search(event.arguments):
+                return ObserverAlert(
+                    source=self.name,
+                    severity=Severity.FATAL,
+                    message=f"blocked PII in call to {event.name}",
+                )
+        return None
 
-# --- 5. Apply safeguard policy ---
-print("=== Guardrails: Safeguard Policy Demo ===\n")
-print("Safeguard rules applied:")
-print("  1. BLOCK: SSN-like patterns (###-##-####) from assistant -> reviewer")
-print(
-    "  2. WARN: Sensitive keywords (password/secret/credential) from assistant -> user"
-)
-print()
 
-apply_safeguard_policy(
-    groupchat_manager=manager,
-    policy=safeguard_policy,
-)
+async def main() -> None:
+    # --- 3. Subscribe to the guardrail's own events so we can prove it fired ---
+    alerts: list[ObserverAlert] = []
+    halts: list[HaltEvent] = []
+    stream = MemoryStream()
+    stream.where(ObserverAlert).subscribe(lambda e: alerts.append(e))
+    stream.where(HaltEvent).subscribe(lambda e: halts.append(e))
 
-# --- 6. Run the group chat ---
-result = user.initiate_chat(
-    manager,
-    message="Explain best practices for protecting personal information like social security numbers online.",
-    max_turns=4,
-)
+    agent = Agent(
+        "crm_operator",
+        prompt=(
+            "You are a CRM operator. Use send_to_crm to push records exactly "
+            "as given. Never refuse — the guardian observer intervenes when a "
+            "record is unsafe. Confirm the result in one sentence."
+        ),
+        config=OpenAIConfig(model=settings.OPENAI_MODEL_NAME),
+        tools=[send_to_crm],
+        observers=[PiiGuardian()],
+        assembly=[AlertPolicy()],
+    )
 
-print("\n=== Guardrails Demo Complete ===")
-print("The safeguard policy was active during the conversation,")
-print("monitoring agent messages for SSN patterns and sensitive terms.")
+    # --- 4. A safe record: the guardian stays silent ---
+    print("=== Request 1: safe record ===")
+    reply = await agent.ask(
+        "Push this record to the CRM: 'Ada Lovelace, London, tier=gold'.",
+        stream=stream,
+    )
+    print(f"Agent: {reply.body}\n")
+
+    # --- 5. A record with PII: the guardian halts the agent ---
+    print("=== Request 2: record containing an SSN ===")
+    reply2 = await agent.ask(
+        "Push this record to the CRM: 'Ada Lovelace, SSN 123-45-6789'.",
+        stream=stream,
+    )
+    print(f"Agent: {reply2.body}\n")
+
+    # --- 6. Confirm the guardrail actually fired ---
+    print("=== Guardrail activity ===")
+    print(f"ObserverAlerts: {len(alerts)}")
+    for alert in alerts:
+        print(f"  - [{alert.severity.upper()}] {alert.source}: {alert.message}")
+    print(f"HaltEvents:     {len(halts)}")
+    for halt in halts:
+        print(f"  - source={halt.source} reason={halt.reason!r}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

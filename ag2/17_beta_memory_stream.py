@@ -1,8 +1,8 @@
 import asyncio
 import os
 
-from autogen.beta import Agent, MemoryStream
-from autogen.beta.config import OpenAIConfig
+from ag2 import Agent, MemoryStream
+from ag2.config import OpenAIConfig
 
 from settings import settings
 
@@ -10,19 +10,18 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 
 """
 -------------------------------------------------------
-In this example, we explore AG2's Beta MemoryStream with the following features:
+In this example, we explore AG2's MemoryStream with the following features:
 - MemoryStream for persistent agent conversation memory
 - Sharing a stream between multiple agent interactions
 - Inspecting stream events to see conversation history
 
-AG2 v0.13 introduces MemoryStream, a structured event log that
-agents use for conversation history. Unlike raw message lists,
-MemoryStream supports compaction, filtering, and sharing across
-agent turns, enabling long-running agent sessions without context
-window overflow.
+MemoryStream is the structured event log agents use for
+conversation history. Unlike raw message lists it supports
+compaction, filtering, and sharing across agent turns, enabling
+long-running sessions without context window overflow.
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/beta/memory
+https://github.com/ag2ai/ag2/blob/v1.0.1/website/docs/user-guide/advanced/stream.mdx
 -------------------------------------------------------
 """
 

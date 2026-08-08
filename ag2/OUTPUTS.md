@@ -1,653 +1,278 @@
 # AG2 Example Outputs
 
-Captured outputs from running all 18 examples against ag2 v0.13.4 with `gpt-4o-mini`.
+Captured outputs from running all 22 examples against ag2 v1.0.1 with `gpt-4o-mini`.
 
-> These outputs may vary between runs due to LLM non-determinism. The structure and tool invocations should remain consistent.
+> These outputs may vary between runs due to LLM non-determinism. The structure, tool invocations, and event sequences should remain consistent.
+
+> AG2 1.0 is a framework substitution, not a version bump: `autogen.beta` became the top-level `ag2` package and the classic `ConversableAgent` API moved to the separate `autogen` distribution ([AG2 Classic](https://github.com/ag2ai/ag2-classic)). Every example in this folder was rewritten or re-imported against the new `ag2` API, so these outputs share nothing with the v0.13.4 baseline.
 
 ---
 
 ## 00_simple_agent.py
 
 ```
-user (to assistant):
+=== Turn 1: new conversation ===
+Response: The phrase "Hello, World!" is commonly used as a simple example in programming languages to illustrate basic syntax. It was popularized by the 1978 book "The C Programming Language" by Brian Kernighan and Dennis Ritchie, where it was used in the first example of a C program.
 
-Where does the phrase 'hello world' come from?
+=== Turn 2: continuation via reply.ask() ===
+Response: From C Programming Language example.
 
---------------------------------------------------------------------------------
-assistant (to user):
-
-The phrase "Hello, World!" is commonly used as a simple example in programming tutorials to demonstrate syntax and output. It originated from the book "The C Programming Language" by Brian Kernighan and Dennis Ritchie, published in 1978.
-
---------------------------------------------------------------------------------
-
-=== Summary ===
-The phrase "Hello, World!" is commonly used as a simple example in programming tutorials to demonstrate syntax and output. It originated from the book "The C Programming Language" by Brian Kernighan and Dennis Ritchie, published in 1978.
+=== Conversation history: 6 event(s) ===
+  - ModelRequest
+  - UsageEvent
+  - ModelResponse
+  - ModelRequest
+  - UsageEvent
+  - ModelResponse
 ```
+
+> `reply.ask()` continues the same conversation — turn 2 compresses turn 1's answer without being told what it was. The 6 history events are the two turns.
 
 ---
 
 ## 01_agent_with_tools.py
 
 ```
-user (to assistant):
+=== Agent with tools ===
 
-What's the weather and population of Lisbon?
+Response: Lisbon is currently experiencing sunny weather with a temperature of 25°C. The city's population is approximately 550,000.
 
---------------------------------------------------------------------------------
-assistant (to user):
-
-***** Suggested tool call (call_lUqDu8pyCCnruQKkbxHEQw6l): get_weather *****
-Arguments:
-{"city": "Lisbon"}
-****************************************************************************
-***** Suggested tool call (call_8K3UxVH7BGBZJ1PqJn5ztJap): get_population *****
-Arguments:
-{"city": "Lisbon"}
-*******************************************************************************
-
---------------------------------------------------------------------------------
-
->>>>>>>> EXECUTING FUNCTION get_weather...
-
->>>>>>>> EXECUTED FUNCTION get_weather...
-Output:
-Sunny, 25°C
-
->>>>>>>> EXECUTING FUNCTION get_population...
-
->>>>>>>> EXECUTED FUNCTION get_population...
-Output:
-~550,000
-
-user (to assistant):
-
-***** Response from calling tool (call_lUqDu8pyCCnruQKkbxHEQw6l) *****
-Sunny, 25°C
-**********************************************************************
-
-***** Response from calling tool (call_8K3UxVH7BGBZJ1PqJn5ztJap) *****
-~550,000
-**********************************************************************
-
---------------------------------------------------------------------------------
-assistant (to user):
-
-Lisbon is currently experiencing sunny weather with a temperature of 25°C. The city's population is approximately 550,000 residents.
-
---------------------------------------------------------------------------------
-
-=== Summary ===
-Lisbon is currently experiencing sunny weather with a temperature of 25°C. The city's population is approximately 550,000 residents.
+=== Tool activity ===
+  -> called get_weather({"city": "Lisbon"})
+  -> called get_population({"city": "Lisbon"})
+  <- get_weather returned 'Sunny, 25°C'
+  <- get_population returned '~550,000'
 ```
+
+> The tool activity section proves both tools actually executed and shows the exact arguments the model chose and the values it got back.
 
 ---
 
 ## 02_structured_outputs.py
 
 ```
-user (to city_expert):
+=== Structured output: CityInfo ===
 
-Tell me about Tokyo.
+  raw body:           {"name":"Tokyo","country":"Japan","population":"14 million (city proper), 37 million (metropolitan area)","famous_for":"Skyscrapers, technology, pop culture, cuisine, and historical sites","best_time_to_visit":"March to May (spring) and September to November (autumn)"}
+  parsed type:        CityInfo
+  City:               Tokyo
+  Country:            Japan
+  Population:         14 million (city proper), 37 million (metropolitan area)
+  Famous for:         Skyscrapers, technology, pop culture, cuisine, and historical sites
+  Best time to visit: March to May (spring) and September to November (autumn)
 
---------------------------------------------------------------------------------
-city_expert (to user):
+=== Per-turn schema override: Distance ===
 
-{"name":"Tokyo","country":"Japan","population":"Approximately 14 million (23 wards)",
- "famous_for":"Modern skyscrapers, historic temples, vibrant culture, and cuisine (sushi, ramen)",
- "best_time_to_visit":"March to May (cherry blossom season) and September to November (mild weather)"}
-
---------------------------------------------------------------------------------
-
-=== Parsed Structured Output ===
-  City: Tokyo
-  Country: Japan
-  Population: Approximately 14 million (23 wards)
-  Famous for: Modern skyscrapers, historic temples, vibrant culture, and cuisine (sushi, ramen)
-  Best time to visit: March to May (cherry blossom season) and September to November (mild weather)
+  parsed type: Distance
+  Tokyo -> Lisbon: 10860 km
 ```
+
+> `reply.body` is the raw JSON the model emitted; `await reply.content()` is the parsed Pydantic object. The second turn overrides the schema for that turn only.
 
 ---
 
 ## 03_human_in_the_loop.py
 
 ```
-=== Human-in-the-Loop: Travel Planning ===
+=== Booking 1: the human approves ===
+  [human] asked: Approve booking to Barcelona for EUR 180? (yes/no)
+  [human] answered: 'yes'
+Agent: Your flight to Barcelona has been successfully booked and charged EUR 180.
 
-human (to assistant):
+=== Booking 2: the human rejects ===
+  [human] asked: Approve booking to Reykjavik for EUR 940? (yes/no)
+  [human] answered: 'no'
+Agent: The booking to Reykjavik was cancelled by the human reviewer.
 
-Plan a 3-day trip to Barcelona.
-
---------------------------------------------------------------------------------
-assistant (to human):
-
-**3-Day Itinerary for Barcelona:**
-
-**Day 1: Explore the Gothic Quarter**
-- Start your day with a visit to the famous La Rambla and enjoy breakfast at a local café.
-- Wander through the Gothic Quarter, visiting the Barcelona Cathedral.
-- Have lunch at one of the traditional tapas bars in the area.
-- In the afternoon, visit the Picasso Museum.
-- End your day with dinner in the El Born neighborhood.
-
-**Day 2: Gaudi's Masterpieces**
-- Begin with a visit to the magnificent Sagrada Familia.
-- Head to Park Güell to enjoy imaginative architecture and city views.
-- Visit Casa Batlló and Casa Milà (La Pedrera).
-- End your day with a flamenco show at a traditional tablao.
-
-**Day 3: Relax at the Beach and Montjuïc**
-- Spend the morning at Barceloneta Beach.
-- Have lunch at a beachside restaurant, savoring fresh seafood.
-- Visit Montjuïc Hill; take the cable car up and explore the castle and gardens.
-- Conclude with the Magic Fountain of Montjuïc evening light show.
-
-Let me know if you approve!
-
---------------------------------------------------------------------------------
-
-[Simulated Human] Reviewing the plan...
-human (to assistant):
-
-Looks good! I approve this itinerary. Please finalize it.
-
---------------------------------------------------------------------------------
-assistant (to human):
-
-TERMINATE.
-
---------------------------------------------------------------------------------
-
-=== Conversation Complete ===
-Human reviewed and approved after 2 interaction(s).
+=== 2 human input request(s) handled ===
 ```
+
+> The tool suspends on `context.input()` and the `hitl_hook` answers it. The approval genuinely gates the outcome: 'yes' confirms, 'no' cancels.
 
 ---
 
 ## 04_multi_agent.py
 
 ```
-=== Multi-Agent Group Chat ===
+=== Multi-agent collaboration via subagents ===
 
-user (to chat_manager):
+Delegations the coordinator's model chose:
+  -> task_researcher
+  -> task_writer
+  -> task_critic
 
-Research and write a brief summary about the history of the Python programming language.
-
---------------------------------------------------------------------------------
-
-Next speaker: researcher
-
-researcher (to chat_manager):
-
-- **Creation and Release**: Python was created by Guido van Rossum and first released in
-  February 1991. It was designed as a successor to the ABC language with an emphasis on
-  code readability and simplicity.
-
-- **Python 2 and 3**: Python 2.0 was released in 2000 with features like list
-  comprehensions. Python 3.0 arrived in December 2008, focused on removing redundancy and
-  improving consistency, though it was not backward compatible.
-
-- **Popularization**: The language gained popularity in the 2000s due to its versatility
-  and robust community, becoming widely used in web development, data science, AI, and
-  scientific computing.
-
-- **Current Status**: Python continues to evolve with regular updates and holds the title
-  of one of the most popular programming languages in the world.
-
---------------------------------------------------------------------------------
-
-Next speaker: writer
-
-writer (to chat_manager):
-
-Python, created by Guido van Rossum and released in February 1991, emerged as a
-successor to the ABC language, prioritizing code readability and ease of use. Its
-evolution saw Python 2.0 in 2000, followed by Python 3.0 in 2008 that enhanced
-language consistency. The language's appeal skyrocketed due to its versatility and
-strong community support, making it a favorite for web development, data science,
-and artificial intelligence. Python remains a leading programming language,
-consistently updated with new features. TERMINATE
-
---------------------------------------------------------------------------------
-
-Next speaker: critic
-
-critic (to chat_manager):
-
-Approved
-
---------------------------------------------------------------------------------
-
-=== Group Chat Complete ===
+=== Final output ===
+Python's journey began in the late 1980s when Guido van Rossum created the language at Centrum Wiskunde & Informatica in the Netherlands, aiming to offer an intuitive programming experience. The first official release, Python 0.9.0, debuted in February 1991 and laid the foundation with essential features like functions, exception handling, and key data types such as lists and dictionaries. Fast forward to October 2000, Python 2.0 introduced innovative concepts like list comprehensions and automatic garbage collection. Then, in December 2008, Python 3.0 emerged as a significant overhaul, emphasizing a more streamlined and consistent language, while deliberately stepping away from backward compatibility to refine its design.
 ```
+
+> The delegation list is the proof: the coordinator's model chose researcher → writer → critic on its own. Nothing hard-codes that order.
 
 ---
 
 ## 05_sequential_chat.py
 
 ```
-=== Sequential Chat Pipeline ===
+=== Sequential pipeline: research -> analysis -> briefing ===
 
-*** Starting a new chat... ***
+      intake: Topic: the current state of quantum computing.
+  researcher: RESEARCH — quantum computing is advancing rapidly with major investments from governments and corporations; practical applications are emerging across sectors like cryptography and materials science; challenges remain in error rates and qubit coherence times.
+     analyst: ANALYSIS — Increased investment in quantum computing can lead to breakthroughs in technology and industry applications; addressing challenges in error rates and qubit coherence will be crucial for the technology's widespread adoption and effectiveness.
+      writer: BRIEFING — The current state of quantum computing shows rapid advancements fueled by significant investments, resulting in potential applications in fields such as cryptography and materials science; however, overcoming challenges related to error rates and qubit coherence is essential for broader adoption and practicality.
 
-orchestrator (to researcher):
-
-Research the current state of quantum computing in 2025.
-
---------------------------------------------------------------------------------
-researcher (to orchestrator):
-
-1. **Increased Quantum Volume**: Major quantum computing companies have reported systems
-   exceeding 128 qubits, indicating substantial increases in computational capability.
-
-2. **Hybrid Quantum-Classical Algorithms**: Hybrid algorithms combining classical and
-   quantum processing have gained momentum for optimization, material science, and ML.
-
-3. **Commercial Availability**: Quantum-as-a-Service platforms are widely available,
-   democratizing access to quantum computing resources.
-
-4. **Sector Adoption**: Pharmaceuticals, finance, and logistics have begun investing in
-   quantum technologies with pilot projects showing promising results.
-
---------------------------------------------------------------------------------
-
-*** Starting a new chat... ***
-
-orchestrator (to analyst):
-
-Analyze the business implications of these findings.
-
---------------------------------------------------------------------------------
-analyst (to orchestrator):
-
-1. **Development of Hybrid Solutions**: Opportunity for firms to create hybrid
-   quantum-classical algorithms tailored for pharmaceuticals and finance.
-
-2. **Quantum Consulting Services**: Growing need for consulting services to guide
-   businesses on integrating quantum computing into operations.
-
-3. **Strategic Partnerships**: Businesses should consider partnerships with quantum
-   computing firms to co-develop innovative solutions.
-
---------------------------------------------------------------------------------
-
-*** Starting a new chat... ***
-
-orchestrator (to writer):
-
-Write an executive briefing based on the research and analysis.
-
---------------------------------------------------------------------------------
-writer (to orchestrator):
-
-Recent advancements in quantum computing reveal significant growth, with companies
-achieving quantum volumes exceeding 128 qubits by 2025. The rise of hybrid
-quantum-classical algorithms enables practical applications across industries,
-further spurred by Quantum-as-a-Service platforms. This presents business
-opportunities including tailored hybrid solutions, quantum consulting services,
-and strategic partnerships with quantum innovators.
-
---------------------------------------------------------------------------------
-
-=== Pipeline Results ===
-
---- Step 1: Research ---
-[Quantum computing findings with 4 key areas]
-
---- Step 2: Analysis ---
-[3 business opportunities identified]
-
---- Step 3: Executive Briefing ---
-[Concise summary combining research and analysis]
+=== Pipeline closed: reason='sequence_complete' ===
 ```
+
+> Ordering is enforced by `TransitionGraph.sequence()`, not by the models. Each stage visibly builds on the previous one, and the hub closes the channel with `sequence_complete`.
 
 ---
 
 ## 06_nested_chat.py
 
 ```
-=== Nested Chat: Content Pipeline ===
+=== Nested workflow behind a single tool ===
 
-user (to lead_agent):
+Tools the publisher saw:
+  -> task_lead_agent
 
-Write about the discovery of penicillin by Alexander Fleming.
+Tools the encapsulated pipeline used internally:
+  -> task_fact_checker
+  -> task_editor
 
---------------------------------------------------------------------------------
-
-*** Starting a new chat... ***
-
-lead_agent (to fact_checker):
-
-Fact-check the following: Write about the discovery of penicillin by Alexander Fleming.
-
---------------------------------------------------------------------------------
-fact_checker (to lead_agent):
-
-1. **Accidental Discovery**: Alexander Fleming discovered penicillin in September 1928
-   when he observed that a mold called Penicillium notatum contaminated one of his petri
-   dishes of Staphylococcus bacteria, inhibiting bacterial growth.
-
-2. **Publication**: Fleming published his findings in 1929, but it wasn't until the early
-   1940s that it was developed into a widely used antibiotic, thanks to Howard Florey and
-   Ernst Boris Chain.
-
-3. **World War II Impact**: Penicillin became mass-produced during WWII, significantly
-   reducing mortality from bacterial infections.
-
---------------------------------------------------------------------------------
-
-*** Starting a new chat... ***
-
-lead_agent (to editor):
-
-Edit and polish the fact-checked content into a final summary.
-
---------------------------------------------------------------------------------
-editor (to lead_agent):
-
-Alexander Fleming accidentally discovered penicillin in September 1928 when he noticed
-that a mold, Penicillium notatum, inhibited the growth of Staphylococcus bacteria in his
-petri dish. Although he published his findings in 1929, it wasn't until the early 1940s,
-with contributions from Howard Florey and Ernst Boris Chain, that penicillin was developed
-into a widely used antibiotic. During World War II, its mass production significantly
-reduced mortality from bacterial infections, highlighting its crucial role in modern
-medicine.
-
---------------------------------------------------------------------------------
-
-lead_agent (to user):
-
-Alexander Fleming accidentally discovered penicillin in September 1928 when he noticed
-that a mold, Penicillium notatum, inhibited the growth of Staphylococcus bacteria. With
-contributions from Howard Florey and Ernst Boris Chain in the 1940s, it became a widely
-used antibiotic. During WWII, mass production significantly reduced mortality from
-bacterial infections, highlighting its crucial role in modern medicine.
-
---------------------------------------------------------------------------------
-
-=== Final Output ===
-[Polished summary after fact-checking and editing nested workflows]
+=== Final output ===
+In 1928, Alexander Fleming discovered penicillin when he observed that the mold Penicillium notatum had antibacterial properties, inhibiting bacterial growth in a contaminated petri dish. This groundbreaking discovery, though made in 1928, only led to the mass production of penicillin in the early 1940s, during World War II, ultimately transforming medical treatment by introducing effective antibiotics.
 ```
+
+> The publisher only ever sees one tool (`task_lead_agent`). The second list is read from the inner shared stream and reveals the encapsulated two-step workflow the caller never saw.
 
 ---
 
 ## 07_code_execution.py
 
 ```
-=== Code Execution: Fibonacci Calculator ===
+=== Task 1: compute the first 10 Fibonacci numbers ===
 
-code_executor (to code_writer):
+Agent: The first 10 Fibonacci numbers are [0, 1, 1, 2, 3, 5, 8, 13, 21, 34] and they have been written to fib.txt in the working directory.
 
-Write Python code to calculate and print the first 10 Fibonacci numbers.
+=== Task 2: read the file back from the same sandbox ===
 
---------------------------------------------------------------------------------
-code_writer (to code_executor):
+Agent: The contents of fib.txt are:\n0\n1\n1\n2\n3\n5\n8\n13\n21\n34.
 
-```python
-def fibonacci(n):
-    fib_sequence = []
-    a, b = 0, 1
-    for _ in range(n):
-        fib_sequence.append(a)
-        a, b = b, a + b
-    return fib_sequence
+=== Executed snippets ===
+  -> run_code: {"code": "fib = [0, 1]\nfor i in range(2, 10):\n    fib.append(fib[i-1] + fib[i-2])\nprint(fib)", "language": "python"}
+  -> run_code: {"code": "fib = [0, 1]\nfor i in range(2, 10):\n    fib.append(fib[i-1] + fib[i-2])\nwith open('fib.txt', 'w') as f:\n  
+  <- [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+  <- 
+  -> run_code: {"code":"with open('fib.txt', 'r') as f:\n    contents = f.read()\nprint(contents)","language":"python"}
+  <- 0
+1
+1
+2
+3
+5
+8
+13
+21
+34
 
-first_10_fib = fibonacci(10)
-print(first_10_fib)
+Sandbox files: ['fib.txt']
 ```
 
---------------------------------------------------------------------------------
-
->>>>>>>> EXECUTING CODE BLOCK (inferred language is python)...
-code_executor (to code_writer):
-
-exitcode: 0 (execution succeeded)
-Code output: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
-
---------------------------------------------------------------------------------
-code_writer (to code_executor):
-
-TERMINATE
-
---------------------------------------------------------------------------------
-
-=== Code Execution Complete ===
-Chat turns: 4
-```
+> Task 2 reads back a file written in task 1, proving the sandbox filesystem persists across calls. Each snippet runs as a fresh process, so the model re-declares `fib` in the second call rather than relying on globals from the first.
 
 ---
 
 ## 08_guardrails.py
 
 ```
-=== Guardrails: Safeguard Policy Demo ===
+=== Request 1: safe record ===
+Agent: The record has been successfully pushed to the CRM.
 
-Safeguard rules applied:
-  1. BLOCK: SSN-like patterns (###-##-####) from assistant -> reviewer
-  2. WARN: Sensitive keywords (password/secret/credential) from assistant -> user
+=== Request 2: record containing an SSN ===
+Agent: HALTED: FATAL: blocked PII in call to send_to_crm
 
-✅ Loaded 2 inter-agent and 0 environment safeguard rules
-
-user (to chat_manager):
-
-Explain best practices for protecting personal information like social security
-numbers online.
-
---------------------------------------------------------------------------------
-
-Next speaker: assistant
-
-assistant (to chat_manager):
-
-Protecting personal information online is crucial. Here are some best practices:
-
-1. **Limit Disclosure**: Only provide your Social Security number when absolutely necessary.
-2. **Use Strong Passwords**: Create strong, unique passwords for your online accounts.
-3. **Enable Two-Factor Authentication (2FA)**: Add an extra layer of security.
-4. **Secure Your Devices**: Use antivirus software and keep systems updated.
-5. **Be Cautious with Public Wi-Fi**: Avoid accessing sensitive information over public networks.
-6. **Monitor Your Accounts**: Check bank and credit card statements regularly.
-7. **Educate Yourself About Phishing**: Be cautious about unsolicited emails.
-...
-
---------------------------------------------------------------------------------
-
-***** Safeguard Check: Checking inter-agent communication *****
-🔍 Checking inter-agent communication
-  • From: assistant → To: user
-  • Guardrail: RegexGuardrail
-***************************************************************
-
-***** Safeguard Violation: DETECTED *****
-🛡️ VIOLATION DETECTED: Match found -> password
-  • From: assistant → To: user
-  • Action: warning
-*****************************************
-
-⚠️ WARNING: Content flagged by safeguard (sensitive keyword detected)
-
-***** Safeguard Check: Checking inter-agent communication *****
-🔍 Checking inter-agent communication
-  • From: assistant → To: reviewer
-  • Guardrail: RegexGuardrail
-***************************************************************
-
-Next speaker: reviewer
-
-reviewer (to chat_manager):
-
-To protect personal information such as Social Security numbers online, it's
-essential to limit disclosure, use strong passwords and two-factor authentication,
-and secure your devices. APPROVE.
-
---------------------------------------------------------------------------------
-
-=== Guardrails Demo Complete ===
-The safeguard policy was active during the conversation,
-monitoring agent messages for SSN patterns and sensitive terms.
+=== Guardrail activity ===
+ObserverAlerts: 1
+  - [FATAL] pii-guardian: blocked PII in call to send_to_crm
+HaltEvents:     1
+  - source=pii-guardian reason='FATAL: blocked PII in call to send_to_crm'
 ```
+
+> Request 1 succeeds; request 2 emits a FATAL `ObserverAlert`, `AlertPolicy` turns it into a `HaltEvent`, and the reply is the synthetic `HALTED: ...` string. Note this halts the turn rather than vetoing the call — the tool still runs, but its result never reaches the model.
 
 ---
 
 ## 09_mcp_tools.py
 
 ```
-=== MCP Tools: Calculator Agent ===
+=== Calculation ===
 
-Connecting to MCP server...
-Loaded 3 tools from MCP server
+Agent: The result of (15 + 27) * 3 is 126.
 
-user (to calculator):
-
-Calculate (15 + 27) * 3 using the tools.
-
---------------------------------------------------------------------------------
-calculator (to user):
-
-***** Suggested tool call: add *****
-Arguments:
-{"a": 15, "b": 27}
-************************************
-***** Suggested tool call: multiply *****
-Arguments:
-{"a": 3, "b": 1}
-*****************************************
-
---------------------------------------------------------------------------------
-
->>>>>>>> EXECUTING FUNCTION add...
-Output: ('42.0', None)
-
->>>>>>>> EXECUTING FUNCTION multiply...
-Output: ('3.0', None)
-
---------------------------------------------------------------------------------
-calculator (to user):
-
-***** Suggested tool call: multiply *****
-Arguments:
-{"a": 42, "b": 3}
-*****************************************
-
---------------------------------------------------------------------------------
-
->>>>>>>> EXECUTING FUNCTION multiply...
-Output: ('126.0', None)
-
---------------------------------------------------------------------------------
-calculator (to user):
-
-To calculate (15 + 27) * 3:
-
-1. Add 15 and 27: 15 + 27 = 42
-2. Multiply the result by 3: 42 * 3 = 126
-
-The final result is **126**.
-
-TERMINATE
-
---------------------------------------------------------------------------------
-
-=== MCP Tools Demo Complete ===
-Final answer: The final result is 126.
+=== MCP tool activity ===
+  -> add({"a": 15, "b": 27})
+  -> multiply({"a": 3, "b": 1})
+  <- 3.0
+  <- 42.0
+  -> multiply({"a":42,"b":3})
+  <- 126.0
 ```
+
+> The `add` and `multiply` tools are discovered from `mcp_server.py` over stdio and executed locally. The FastMCP server's own protocol logging goes to stderr and is not shown here.
 
 ---
 
 ## 10_observability.py
 
 ```
-=== Observability: Runtime Logging ===
+=== Session: two turns on one observed stream ===
 
-Logging session started: 68c40802-a61e-4d99-bf4e-56ef8bfb97ed
-Database: /tmp/ag2_logging_demo.db
+Turn 1: The speed of light in a vacuum is approximately 299,792 kilometers per second (km/s), or about 186,282 miles per second (mi/s).
+  [trace] tool call: get_distance({"city_a":"Lisbon","city_b":"Reykjavik"})
+Turn 2: The distance from Lisbon to Reykjavik is approximately 2,780 kilometers.
 
---- Running conversation 1 ---
-user (to assistant):
+Wrote 14 events to res/ag2_event_log.jsonl
 
-What is the speed of light?
+=== Event counts ===
+  UsageEvent: 3
+  ModelResponse: 3
+  ModelRequest: 2
+  ModelMessage: 2
+  ToolCallsEvent: 1
+  ToolCallEvent: 1
+  ToolResultEvent: 1
+  ToolResultsEvent: 1
 
---------------------------------------------------------------------------------
-assistant (to user):
-
-The speed of light in a vacuum is approximately 299,792,458 meters per second
-(or about 300,000 kilometers per second).
-
---------------------------------------------------------------------------------
-
---- Running conversation 2 ---
-user (to assistant):
-
-What is the largest ocean on Earth?
-
---------------------------------------------------------------------------------
-assistant (to user):
-
-The largest ocean on Earth is the Pacific Ocean.
-
---------------------------------------------------------------------------------
-
-Logging session stopped.
-
-=== Log Analysis ===
-
-  chat_completions: 2 record(s)
-  agents: 2 record(s)
-  oai_wrappers: 1 record(s)
-  oai_clients: 1 record(s)
-  version: 1 record(s)
-  events: 12 record(s)
-
---- Chat Completions ---
-  [1] Agent: assistant | Start: 2026-03-29 18:10:41 | End: 2026-03-29 18:10:42
-  [2] Agent: assistant | Start: 2026-03-29 18:10:42 | End: 2026-03-29 18:10:43
-
---- Registered Agents ---
-  assistant (ConversableAgent)
-  user (ConversableAgent)
-
---- Events ---
-  [assistant] received_message
-  [assistant] reply_func_executed (x4)
-  [user] received_message
-  [assistant] received_message
-  [assistant] reply_func_executed (x4)
-  [user] received_message
-
-=== Observability Demo Complete ===
-Session logged 2 completions and 12 events.
+=== Token usage ===
+  prompt tokens:     380
+  completion tokens: 74
 ```
+
+> The stream-based replacement for the removed SQLite `runtime_logging`. The event log is written to `res/ag2_event_log.jsonl` and then queried for event counts and token totals.
 
 ---
 
 ## 11_a2a.py
 
 ```
-=== A2A: Agent-to-Agent Protocol ===
+=== A2A: agent-to-agent over JSON-RPC ===
 
-Starting A2A server on port 18765...
-Server ready.
+Server listening on http://127.0.0.1:18765
+Agent card: name='translator' version=1.0.0
+Bindings:   ['JSONRPC']
+Skills:     ['translator']
 
-Sending request to remote A2A agent...
+Turn 1
+  sent:     Hello, how are you today?
+  received: Bonjour, comment ça va aujourd'hui ?
 
-user (to remote_translator):
+Turn 2 (same conversation, server-side glossary tool consulted)
+  sent:     The agent used a tool.
+  received: L'agent a utilisé un outil.
 
-Hello, how are you today?
-
---------------------------------------------------------------------------------
-
->>>>>>>> USING AUTO REPLY...
-remote_translator (to user):
-
-Bonjour, comment ça va aujourd'hui ?
-
---------------------------------------------------------------------------------
-
-=== Translation Result ===
-Original: Hello, how are you today?
-French:   Bonjour, comment ça va aujourd'hui ?
-
-=== A2A Demo Complete ===
+=== A2A demo complete ===
 ```
+
+> The card is fetched over HTTP from `/.well-known/agent-card.json`. Turn 2 renders 'tool' as 'outil', which is the server-side glossary tool's house translation — proof the remote tool executed on the server.
 
 ---
 
@@ -656,10 +281,7 @@ French:   Bonjour, comment ça va aujourd'hui ?
 ```
 === Beta Agent: Simple Question ===
 
-Response: The phrase "Hello, World!" is widely known as a simple program used to
-illustrate the basic syntax of a programming language. Its origins can be traced back
-to the 1972 Bell Laboratories' "The C Programming Language" book by Brian Kernighan
-and Dennis Ritchie.
+Response: The phrase "Hello, World!" is commonly used as a simple programming example to demonstrate the basic syntax of a programming language, and it first appeared in the 1978 book "The C Programming Language" by Brian Kernighan and Dennis Ritchie. It has since become a standard introductory exercise in many programming tutorials.
 
 === Beta Agent: Second Question ===
 
@@ -668,12 +290,9 @@ Response: The capital of Portugal is Lisbon.
 === Reply History ===
   Events in history: 3
   - ModelRequest
-  - ModelMessage
+  - UsageEvent
   - ModelResponse
 ```
-
-> The beta Agent uses async `ask()` and returns an `AgentReply` with `.body` for text
-> and `.history.get_events()` for the event stream.
 
 ---
 
@@ -682,11 +301,11 @@ Response: The capital of Portugal is Lisbon.
 ```
 === Beta Agent: Tools ===
 
-Response: The current weather in Lisbon is sunny with a temperature of 25°C.
-The population of Lisbon is approximately 550,000 residents.
+Response: The current weather in Lisbon is sunny with a temperature of 25°C. The population of Lisbon is approximately 550,000.
 
 === Event History ===
   ModelRequest
+  UsageEvent
   ModelResponse
   ToolCallsEvent
   ToolCallEvent
@@ -694,12 +313,11 @@ The population of Lisbon is approximately 550,000 residents.
   ToolResultEvent
   ToolResultEvent
   ToolResultsEvent
-  ModelMessage
+  UsageEvent
   ModelResponse
 ```
 
-> The event history shows the full tool-calling loop: initial LLM request, tool calls
-> dispatched and executed, results fed back, then final LLM response.
+> The event history shows the full loop: request → response with tool calls → two tool executions → results → final response.
 
 ---
 
@@ -711,20 +329,20 @@ The population of Lisbon is approximately 550,000 residents.
 Events as they happen:
   [Observer] ModelRequest: LLM request sent
   [Observer] ModelMessage: LLM message received
+  [Observer] UsageEvent
   [Observer] ModelResponse: LLM response complete
 
-Response: The speed of light in a vacuum is approximately 299,792 kilometers per
-second (km/s), or about 186,282 miles per second (mi/s).
+Response: The speed of light in a vacuum is approximately 299,792 kilometers per second (or about 186,282 miles per second).
 
 === Observer Summary ===
-Total events captured: 3
+Total events captured: 4
   1. ModelRequest
   2. ModelMessage
-  3. ModelResponse
+  3. UsageEvent
+  4. ModelResponse
 ```
 
-> MemoryStream captures events in real time via `subscribe()`. The callback fires as
-> each event occurs during agent execution, enabling observability and custom UIs.
+> The `[Observer]` lines are printed live from the subscriber as each event lands, before the response is returned.
 
 ---
 
@@ -735,21 +353,18 @@ Total events captured: 3
 
   City: Lisbon
   Country: Portugal
-  Population: 547,733
-  Famous for: Historic architecture, vibrant nightlife, and cultural heritage
-  Best time to visit: March to May and September to October
+  Population: 552,700 (2021)
+  Famous for: Historic architecture, Fado music, vibrant nightlife, and delicious cuisine.
+  Best time to visit: March to May and September to October.
 
 --- Second Query ---
 
   City: Tokyo
   Country: Japan
   Population: 13.96 million
-  Famous for: Unique blend of tradition and modernity, cherry blossoms, and technology
-  Best time to visit: March to May, and September to November
+  Famous for: Unique blend of traditional culture and modern technology, cuisine, shopping, and anime culture.
+  Best time to visit: March to May (spring) and September to November (autumn)
 ```
-
-> The beta Agent's `response_schema` constrains LLM output to match a Pydantic model,
-> guaranteeing parseable structured data.
 
 ---
 
@@ -758,16 +373,14 @@ Total events captured: 3
 ```
 === Agent with Middleware Stack ===
 
-  [LoggingMiddleware] LLM call intercepted
-  [LoggingMiddleware] LLM responded
-  [TimingMiddleware] Turn completed in 2.14s
+  [CallTracerMiddleware] LLM call intercepted
+  [CallTracerMiddleware] LLM responded
+  [TimingMiddleware] Turn completed in 0.67s
 
 Response: The capital of France is Paris.
 ```
 
-> Middlewares intercept agent LLM calls without modifying agent code. `on_llm_call`
-> fires around each model request; `on_turn` wraps the full agent turn. Multiple
-> middlewares compose in stack order.
+> Both middlewares fire on one turn: `on_llm_call` brackets the model call and `on_turn` brackets the whole turn, so the timing line prints last.
 
 ---
 
@@ -781,13 +394,113 @@ Response: Nice to meet you, Alice! How can I assist you today?
 Response: Your name is Alice, and you work at Acme Corp.
 
 === Memory Stream Contents ===
-Total events in stream: 4
-  [0] ModelRequest: ModelRequest(parts=[TextInput(content='My name is Alice and I work at Acme Corp.')])
-  [1] ModelResponse: ModelResponse(content=Nice to meet you, Alice! How can I assist you today?, ...)
-  [2] ModelRequest: ModelRequest(parts=[TextInput(content='What is my name and where do I work?')])
-  [3] ModelResponse: ModelResponse(content=Your name is Alice, and you work at Acme Corp., ...)
+Total events in stream: 6
+  [0] ModelRequest: ModelRequest(parts=[TextInput(content='My name is Alice and I work at Acme Corp....
+  [1] UsageEvent: UsageEvent(label=None, kind='model_call', model='gpt-4o-mini-2024-07-18', provid...
+  [2] ModelResponse: ModelResponse(content=Nice to meet you, Alice! How can I assist you today?, usag...
+  [3] ModelRequest: ModelRequest(parts=[TextInput(content='What is my name and where do I work?')])...
+  [4] UsageEvent: UsageEvent(label=None, kind='model_call', model='gpt-4o-mini-2024-07-18', provid...
+  [5] ModelResponse: ModelResponse(content=Your name is Alice, and you work at Acme Corp., usage=Usag...
 ```
 
-> MemoryStream maintains structured event history across turns. The agent retains
-> context from earlier interactions via the shared stream, and `history.get_events()`
-> returns the full event log for inspection or persistence.
+> Turn 2 recalls the name and employer from turn 1 purely because both turns share one `MemoryStream`.
+
+---
+
+## 18_observable_run.py
+
+```
+=== Live token stream ===
+
+Paris, the capital of France, is renowned for its art, fashion, and cultural landmarks, including the iconic Eiffel Tower and the Louvre Museum. The city's charm lies in its historic architecture, vibrant cafés, and romantic atmosphere, making it a beloved destination for travelers worldwide.
+
+Final body length: 293 chars
+
+=== Mid-turn steering with run.enqueue() ===
+
+  [event] tool returned, injecting a follow-up instruction
+
+Steered result: Lisbon is the capital of Portugal, founded before Rome, located on the Tagus estuary.
+```
+
+> The first block prints tokens as they arrive rather than after the turn. The second injects a follow-up mid-turn via `run.enqueue()` — the same turn then returns the compressed one-liner.
+
+---
+
+## 19_resume.py
+
+```
+=== Step 1: an original conversation ===
+Agent: On Day 1, visit Kinkaku-ji (Golden Pavilion), Ryoan-ji rock garden, and the Arashiyama Bamboo Grove, while on Day 2, explore Fushimi Inari Taisha, Gion district, and the Kyoto Imperial Palace, finishing with a traditional kaiseki dinner.
+
+Stored trajectory: 3 events
+  ['ModelRequest', 'UsageEvent', 'ModelResponse']
+
+=== Step 2: resume from the stored trajectory ===
+Agent: Take the Shinkansen (bullet train) from Tokyo to Kyoto, which takes about 2 hours and 30 minutes, or use the JR Special Rapid Service from Osaka, which takes about 30 minutes.
+
+=== Step 3: resume from an out-of-band tool result ===
+  replayed call:  lookup_order(id=A-1001)
+  out-of-band result: 'Shipped, arriving Tuesday.'
+  Agent: Your order A-1001 has been shipped and is scheduled to arrive on Tuesday.
+```
+
+> Step 2 uses a brand-new `Agent` with no live stream, yet answers in context — everything it knows came from the replayed events. Step 3 drives the loop from a `ToolResultsEvent` produced out of band, without re-executing the tool.
+
+---
+
+## 20_metrics.py
+
+```
+=== Generating traffic ===
+
+assistant: 250 EUR is equal to 272.50 USD.
+assistant: I cannot convert EUR to Klingon darseks as there is no exchange rate available for that currency.
+reviewer:  Approved.
+
+=== Prometheus exposition (filtered) ===
+
+  ag2_llm_calls_total{agent="assistant",error_type="",finish_reason="tool_calls",model="gpt-4o-mini",outcome="success",provider="openai"} 2.0
+  ag2_llm_calls_total{agent="assistant",error_type="",finish_reason="stop",model="gpt-4o-mini",outcome="success",provider="openai"} 2.0
+  ag2_llm_calls_total{agent="reviewer",error_type="",finish_reason="stop",model="gpt-4o-mini",outcome="success",provider="openai"} 1.0
+  ag2_llm_tokens_total{agent="assistant",model="gpt-4o-mini",provider="openai",token_type="input"} 1159.0
+  ag2_llm_tokens_total{agent="assistant",model="gpt-4o-mini",provider="openai",token_type="output"} 73.0
+  ag2_llm_tokens_total{agent="assistant",model="gpt-4o-mini",provider="openai",token_type="total"} 1232.0
+  ag2_llm_tokens_total{agent="reviewer",model="gpt-4o-mini",provider="openai",token_type="input"} 41.0
+  ag2_llm_tokens_total{agent="reviewer",model="gpt-4o-mini",provider="openai",token_type="output"} 2.0
+  ag2_llm_tokens_total{agent="reviewer",model="gpt-4o-mini",provider="openai",token_type="total"} 43.0
+  ag2_tool_calls_total{agent="assistant",error_type="",outcome="success",tool="convert_currency"} 1.0
+  ag2_tool_calls_total{agent="assistant",error_type="ValueError",outcome="error",tool="convert_currency"} 1.0
+  ag2_agent_turns_total{agent="assistant",error_type="",outcome="success"} 2.0
+  ag2_agent_turns_total{agent="reviewer",error_type="",outcome="success"} 1.0
+```
+
+> Real Prometheus exposition text. Note the two `ag2_tool_calls_total` series: one `outcome="success"` and one `outcome="error"` with `error_type="ValueError"` from the unsupported-currency call.
+
+---
+
+## 21_cli_agents_acp.py
+
+```
+=== ACP adapters ===
+
+  Claude Code  command=claude-agent-acp     on PATH=False
+  Codex        command=codex-acp            on PATH=False
+  OpenCode     command=opencode acp         on PATH=True
+
+=== Agent construction ===
+  agent name:        coder
+  config type:       ClaudeCodeConfig
+  workspace (cwd):   res/acp_workspace
+  permission_policy: auto
+  expose_tools:      True
+
+=== Driving OpenCode ===
+
+  OpenCode session failed: RequestError: Internal error: OpenCode service failure
+  This usually means the CLI agent is installed but not authenticated.
+```
+
+> This run had `opencode` on PATH but no authenticated provider, so the ACP session failed. The example verifies adapter presets and agent construction, reports the real error, and exits 0 — no transcript is fabricated. With an authenticated CLI agent the `=== Driving ... ===` section streams its thoughts, tool calls, and final message.
+
+---

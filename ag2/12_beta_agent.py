@@ -1,8 +1,8 @@
 import asyncio
 import os
 
-from autogen.beta import Agent
-from autogen.beta.config import OpenAIConfig
+from ag2 import Agent
+from ag2.config import OpenAIConfig
 
 from settings import settings
 
@@ -10,19 +10,18 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 
 """
 -------------------------------------------------------
-In this example, we explore AG2's Beta Agent with the following features:
-- The new beta Agent class (autogen.beta.Agent)
+In this example, we explore AG2's Agent with the following features:
+- The Agent class, promoted from autogen.beta to top-level ag2
 - OpenAIConfig for model configuration
 - Async-first design with agent.ask()
 - AgentReply with .body for response text
 
-AG2 v0.12+ introduces a new beta Agent that will become the
-official API at v1.0. It uses an async-first design, typed
-configuration objects, and a simplified ask() interface
-compared to the classic ConversableAgent.
+These examples were written against the v0.12 beta Agent. At v1.0
+that beta was promoted to the official API: the import path moved
+from autogen.beta to ag2, and every call below is unchanged.
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/release-roadmap/
+https://docs.ag2.ai/latest/docs/beta/agents/
 -------------------------------------------------------
 """
 

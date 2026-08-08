@@ -1,6 +1,9 @@
+import asyncio
 import os
 
-from autogen import ConversableAgent, LLMConfig
+from ag2 import Agent, MemoryStream
+from ag2.config import OpenAIConfig
+from ag2.events import ToolCallEvent
 
 from settings import settings
 
@@ -9,95 +12,98 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 """
 -------------------------------------------------------
 In this example, we explore AG2 with the following features:
-- Nested chats using register_nested_chats()
-- Encapsulating multi-agent workflows inside a single agent
-- Automatic delegation to sub-agents on incoming messages
+- Nesting subagents two levels deep to encapsulate a workflow
+- A shared MemoryStream to observe the inner workflow's events
+- The outer caller seeing a single tool, not the whole team
 
-Nested chats allow an agent to internally run a sequence
-of chats with other agents whenever it receives a message.
-The outer caller sees a single agent, but internally a
-full workflow executes and produces the final reply.
+Classic AG2's register_nested_chats() has no direct successor.
+The 1.0 idiom is a hierarchy of as_tool() subagents: the lead agent
+delegates to a fact checker and an editor, and is itself exposed to
+the caller as one tool. Passing an explicit stream to as_tool() lets
+us read the encapsulated workflow's events afterwards.
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/advanced-concepts/orchestration/nested-chat/
+https://github.com/ag2ai/ag2/blob/v1.0.1/website/docs/user-guide/subagents.mdx
 -------------------------------------------------------
 """
 
-# --- 1. Configure LLM ---
-llm_config = LLMConfig({"model": settings.OPENAI_MODEL_NAME})
 
-# --- 2. Create inner workflow agents ---
-fact_checker = ConversableAgent(
-    name="fact_checker",
-    system_message=(
-        "You are a fact checker. Given a claim or topic, verify key facts "
-        "and list 2-3 verified points. Be concise."
-    ),
-    llm_config=llm_config,
-    human_input_mode="NEVER",
-)
+async def main() -> None:
+    config = OpenAIConfig(model=settings.OPENAI_MODEL_NAME)
 
-editor = ConversableAgent(
-    name="editor",
-    system_message=(
-        "You are an editor. Given fact-checked content, improve clarity "
-        "and conciseness. Output a polished 2-3 sentence summary."
-    ),
-    llm_config=llm_config,
-    human_input_mode="NEVER",
-)
-
-# --- 3. Create the lead agent with nested chats ---
-lead_agent = ConversableAgent(
-    name="lead_agent",
-    system_message=(
-        "You are a lead content agent. You oversee content quality by "
-        "coordinating fact-checking and editing workflows."
-    ),
-    llm_config=llm_config,
-    human_input_mode="NEVER",
-)
-
-# --- 4. Register nested chats on the lead agent ---
-# When lead_agent receives a message from an external sender,
-# it internally runs these chats in sequence.
-nested_chats = [
-    {
-        "recipient": fact_checker,
-        "message": lambda recipient, messages, sender, config: (
-            f"Fact-check the following: {messages[-1]['content']}"
+    # --- 1. Inner workflow agents ---
+    fact_checker = Agent(
+        "fact_checker",
+        prompt=(
+            "You are a fact checker. Verify the claim you are given and list "
+            "2-3 verified points. Be concise."
         ),
-        "max_turns": 1,
-        "summary_method": "last_msg",
-    },
-    {
-        "recipient": editor,
-        "message": "Edit and polish the fact-checked content into a final summary.",
-        "max_turns": 1,
-        "summary_method": "last_msg",
-    },
-]
+        config=config,
+    )
 
-lead_agent.register_nested_chats(
-    chat_queue=nested_chats,
-    trigger=lambda sender: sender not in [fact_checker, editor],
-)
+    editor = Agent(
+        "editor",
+        prompt=(
+            "You are an editor. Polish the fact-checked notes you are given "
+            "into a 2-3 sentence summary."
+        ),
+        config=config,
+    )
 
-# --- 5. Create an external user agent ---
-user = ConversableAgent(
-    name="user",
-    human_input_mode="NEVER",
-    llm_config=False,
-    max_consecutive_auto_reply=0,
-)
+    # --- 2. The lead agent owns the inner workflow ---
+    lead = Agent(
+        "lead_agent",
+        prompt=(
+            "You run a content pipeline. Always fact-check the topic first, "
+            "then pass the verified notes to the editor via the context "
+            "parameter. Return only the editor's final summary."
+        ),
+        config=config,
+        tools=[
+            fact_checker.as_tool(description="Fact-check a claim or topic."),
+            editor.as_tool(
+                description="Polish notes into a summary. Pass notes in the context parameter."
+            ),
+        ],
+    )
 
-# --- 6. Run the conversation ---
-print("=== Nested Chat: Content Pipeline ===\n")
-result = user.initiate_chat(
-    lead_agent,
-    message="Write about the discovery of penicillin by Alexander Fleming.",
-    max_turns=1,
-)
+    # --- 3. Expose the whole pipeline to the caller as ONE tool ---
+    # The explicit stream makes the encapsulated workflow observable.
+    inner_stream = MemoryStream()
+    publisher = Agent(
+        "publisher",
+        prompt=(
+            "You are a publisher. Delegate every request to the content "
+            "pipeline and return its summary verbatim."
+        ),
+        config=config,
+        tools=[
+            lead.as_tool(
+                description="Run the full fact-check and edit pipeline on a topic.",
+                stream=inner_stream,
+            )
+        ],
+    )
 
-print("\n=== Final Output ===")
-print(result.summary)
+    # --- 4. Run it: the caller only ever sees task_lead_agent ---
+    print("=== Nested workflow behind a single tool ===\n")
+    reply = await publisher.ask(
+        "Write about the discovery of penicillin by Alexander Fleming."
+    )
+
+    print("Tools the publisher saw:")
+    for event in await reply.context.stream.history.get_events():
+        if isinstance(event, ToolCallEvent):
+            print(f"  -> {event.name}")
+
+    # --- 5. Reveal what happened inside the encapsulated pipeline ---
+    print("\nTools the encapsulated pipeline used internally:")
+    for event in await inner_stream.history.get_events():
+        if isinstance(event, ToolCallEvent):
+            print(f"  -> {event.name}")
+
+    print(f"\n=== Final output ===\n{reply.body}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
