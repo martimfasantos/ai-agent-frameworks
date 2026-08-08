@@ -40,7 +40,13 @@ Always end the haiku with the marker (fin).
 agent = create_deep_agent(
     model=f"openai:{settings.OPENAI_MODEL_NAME}",
     skills=["/skills/"],
-    system_prompt="You are a helpful assistant. Use skills when relevant.",
+    # 0.7.0 trimmed the default prompt, so spell out the progressive-disclosure
+    # step instead of relying on the model to take the initiative
+    system_prompt=(
+        "You are a helpful assistant. Before answering, check the available "
+        "skills; if one matches, read its SKILL.md with read_file and follow "
+        "those instructions exactly."
+    ),
 )
 
 # --- 3. Seed the skill file into the virtual filesystem (StateBackend) ---

@@ -17,6 +17,7 @@ load_dotenv()
 In this example, we explore Deep Agents with the following features:
 - Conversation summarization to keep the context window small
 - The compact_conversation tool (SummarizationToolMiddleware)
+- Supplying the compaction system_prompt, which no longer has a default
 - A low token trigger so compaction is demonstrable in a short run
 
 Long-running agents accumulate huge message histories that inflate cost
@@ -42,7 +43,14 @@ summarization = SummarizationMiddleware(
 )
 
 # --- 2. Expose it as an on-demand compact_conversation tool ---
-compaction_tool = SummarizationToolMiddleware(summarization)
+# system_prompt defaults to None since 0.7.0, so the nudge must be passed explicitly
+compaction_tool = SummarizationToolMiddleware(
+    summarization,
+    system_prompt=(
+        "When the current topic is finished, or the conversation has grown long, "
+        "call compact_conversation to fold the older turns into a summary."
+    ),
+)
 agent = create_deep_agent(
     model=model,
     middleware=[compaction_tool],

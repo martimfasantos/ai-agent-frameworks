@@ -40,9 +40,9 @@ uv run python 00_hello_world.py
 |------|---------|----------|
 | `00_hello_world.py` | Hello World | `create_deep_agent`, `invoke` |
 | `01_tools.py` | Custom Tools | `@tool`, `tools=[...]` |
-| `02_task_planning.py` | Task Planning | built-in `write_todos` tool, `result["todos"]` |
+| `02_task_planning.py` | Task Planning | `TodoListMiddleware`, `write_todos` tool, `result["todos"]` |
 | `03_virtual_filesystem.py` | Virtual Filesystem | `write_file`/`read_file`, `result["files"]` (default `StateBackend`) |
-| `04_filesystem_permissions.py` | Filesystem Permissions | `FilesystemPermission`, `permissions=[...]` |
+| `04_filesystem_permissions.py` | Filesystem Permissions | `FilesystemPermission`, `permissions=[...]`, gating the `delete` tool |
 | `05_structured_output.py` | Structured Output | `response_format=<PydanticModel>`, `result["structured_response"]` |
 | `06_streaming.py` | Streaming | `agent.stream(..., stream_mode="updates")` |
 | `07_subagents.py` | Subagents | `SubAgent`, `subagents=[...]`, built-in `task` tool |
@@ -56,8 +56,9 @@ uv run python 00_hello_world.py
 | `15_custom_middleware.py` | Custom Middleware | `AgentMiddleware`, `wrap_model_call` |
 | `16_runtime_context.py` | Runtime Context | `context_schema`, `ToolRuntime`, `context=` at invoke |
 | `17_rubric_middleware.py` | Rubric Middleware | `RubricMiddleware`, grader loop, `rubric` state key |
-| `18_harness_profiles.py` | Harness Profiles | `HarnessProfile`, `register_harness_profile` |
+| `18_harness_profiles.py` | Harness Profiles | `HarnessProfile`, `register_harness_profile`, `excluded_tools` |
 | `19_interpreters.py` | Code Interpreters | `CodeInterpreterMiddleware` (QuickJS `eval` tool) |
+| `20_filesystem_tool_allowlist.py` | Filesystem Tool Allowlist | `FilesystemMiddleware(tools=[...])`, `FsToolName`, middleware override by `.name` |
 
 See [`OUTPUTS.md`](./OUTPUTS.md) for captured output from every example.
 
@@ -65,10 +66,11 @@ See [`OUTPUTS.md`](./OUTPUTS.md) for captured output from every example.
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `deepagents` | >=0.6.12 | Core Deep Agents framework (`create_deep_agent`, backends, middleware) |
-| `langchain` | >=1.3.11 | LangChain base library (middleware, tools, runtime) |
+| `deepagents` | >=0.7.4 | Core Deep Agents framework (`create_deep_agent`, backends, middleware) |
+| `langchain` | >=1.3.14 | LangChain base library (middleware, tools, runtime) |
+| `langchain-core` | >=1.5.0 | Core message/tool/runtime primitives (pulled in by `deepagents`) |
 | `langchain-openai` | >=1.3.3 | OpenAI model integration (`ChatOpenAI`) |
-| `langchain-quickjs` | >=0.3.2 | Sandboxed JavaScript code interpreter (`19_interpreters.py`), installed via the `deepagents[quickjs]` extra |
+| `langchain-quickjs` | >=0.3.3 | Sandboxed JavaScript code interpreter (`19_interpreters.py`), installed via the `deepagents[quickjs]` extra |
 | `pydantic` | >=2.13.4 | Structured outputs and context schemas |
 | `pydantic-settings` | >=2.14.2 | `.env` file loading via `BaseSettings` |
 | `python-dotenv` | >=1.2.2 | Environment variable loading |

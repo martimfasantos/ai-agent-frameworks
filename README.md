@@ -188,7 +188,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
         </picture>
     <strong style="vertical-align: middle; font-size: 1.2em;">Deep Agents</strong>
       </td>
-      <td><code>0.6.12</code></td>
+      <td><code>0.7.4</code></td>
       <td>
           <a href="https://docs.langchain.com/oss/python/deepagents/overview">
             <picture>

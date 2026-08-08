@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+from langchain.agents.middleware import TodoListMiddleware
 
 from deepagents import create_deep_agent
 
@@ -9,24 +10,26 @@ load_dotenv()
 """
 -----------------------------------------------------------------------
 In this example, we explore Deep Agents with the following features:
-- The built-in write_todos task-planning tool
+- Adding task planning with TodoListMiddleware
 - Reading the agent's plan back from state after the run
 - How the harness tracks pending / in_progress / completed tasks
 
-Deep Agents ship with a write_todos tool out of the box. For multi-step
-work, the agent maintains a structured task list in its state so it can
-plan, track progress, and stay organized on long-running tasks. Here we
-give the agent a small multi-step task and then print the todo list it
-built to organize the work.
+Task planning gives the agent a write_todos tool plus a todos state
+channel, so on multi-step work it can lay out a structured plan and track
+progress against it. As of deepagents 0.7.0 this is opt-in: pass
+TodoListMiddleware explicitly (it used to be part of the default stack).
+Here we give the agent a small multi-step task and then print the todo
+list it built to organize the work.
 
 For more details, visit:
 https://docs.langchain.com/oss/python/deepagents/overview#task-planning
 -----------------------------------------------------------------------
 """
 
-# --- 1. Create the agent (write_todos is built in) ---
+# --- 1. Create the agent with the task-planning middleware ---
 agent = create_deep_agent(
     model=f"openai:{settings.OPENAI_MODEL_NAME}",
+    middleware=[TodoListMiddleware()],
     system_prompt=(
         "You are a project planner. For any multi-step task, first use the "
         "write_todos tool to lay out the plan, then give a one-sentence summary."

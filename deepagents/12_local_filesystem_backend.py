@@ -14,15 +14,16 @@ load_dotenv()
 -----------------------------------------------------------------------
 In this example, we explore Deep Agents with the following features:
 - FilesystemBackend: persist agent files to a real directory on disk
-- virtual_mode=True so agent paths are scoped under a root directory
+- virtual_mode: agent paths are scoped under a root directory
 - Verifying agent output by reading the file back from the real disk
 
 By default a Deep Agent uses an ephemeral, in-memory StateBackend. The
 FilesystemBackend instead reads and writes real files under a root_dir,
 so the agent's work survives the process and can be inspected with any
-tool. With virtual_mode=True, an agent path like /notes.txt is mapped to
-<root_dir>/notes.txt. Here the agent creates a file and we prove it
-exists by opening it directly from the filesystem.
+tool. Under virtual_mode an agent path like /notes.txt is mapped to
+<root_dir>/notes.txt — the default since 0.7.0, passed explicitly below
+to make the mapping obvious. Here the agent creates a file and we prove
+it exists by opening it directly from the filesystem.
 
 For more details, visit:
 https://docs.langchain.com/oss/python/deepagents/backends
@@ -33,6 +34,7 @@ https://docs.langchain.com/oss/python/deepagents/backends
 workspace = tempfile.mkdtemp(prefix="deepagents_fs_")
 
 # --- 2. Back the agent with a FilesystemBackend rooted at that directory ---
+# virtual_mode=True is the default since 0.7.0; stated here for clarity
 backend = FilesystemBackend(root_dir=workspace, virtual_mode=True)
 agent = create_deep_agent(
     model=f"openai:{settings.OPENAI_MODEL_NAME}",
