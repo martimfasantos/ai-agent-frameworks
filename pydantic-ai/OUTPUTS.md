@@ -1,6 +1,7 @@
 # Pydantic AI — Example Outputs
 
-All examples run with `pydantic-ai>=1.93.0`, model `gpt-4o-mini`.
+All examples run with `pydantic-ai==2.24.0`, model `openai-chat:gpt-4o-mini`
+(`03_built_in_tools.py` overrides this to `openai-responses:gpt-4o-mini`, which native tools require).
 
 > **Note:** LLM responses are non-deterministic. Your outputs will differ in wording
 > but should follow the same structure and demonstrate the same features.
@@ -10,12 +11,10 @@ All examples run with `pydantic-ai>=1.93.0`, model `gpt-4o-mini`.
 ## 00. Hello World (`00_hello_world.py`)
 
 ```
-"Hello, World!" originated from the 1972 programming language tutorial for the B
-programming language and has since become a standard example for demonstrating
-basic syntax in many programming languages.
+"Hello, World!" originated from the 1972 Bell Labs' programming language tutorial for the C
+language by Brian Kernighan and has since become a standard first program in many programming
+languages.
 ```
-
-> The agent responds concisely in one sentence, as instructed.
 
 ---
 
@@ -23,29 +22,26 @@ basic syntax in many programming languages.
 
 ```
 === Example 1: Basic Tool Usage ===
-🎲 Die rolled: 5
-🎮 Game Result: The die rolled a 5, but your guess was 4. Better luck next time, Alice!
+🎲 Die rolled: 6
+🎮 Game Result: The die rolled a 6, but your guess was 4. Unfortunately, you didn't win this time. Better luck next time, Alice!
 
 📈 Final Metrics:
    - Total requests: 2
    - Tool calls executed: 2
    - Input tokens used: 241
-   - Output tokens generated: 63
+   - Output tokens generated: 71
 
 ============================================================
 
 === Example 2: Advanced Tool Registration Patterns and Usage Limits ===
 🌤️  Weather Agent:
-   Response: The current weather in London is snowy, with a temperature of 19°C
-   and humidity at 38%.
+   Response: The current weather in London is snowy, with a temperature of 8°C and a humidity level of 78%.
    Tool Calls: 1 tool calls
 
 ============================================================
 
 === Example 3: Message History and Tool Inspection ===
-🔍 Research Result: AI, or Artificial Intelligence, is a fascinating field that
-   focuses on creating systems capable of performing tasks that typically require
-   human intelligence...
+🔍 Research Result: AI, or artificial intelligence, refers to the simulation of human intelligence in machines that are programmed to think and learn like humans. ...
 
 📋 Message History Analysis:
    Message 1: ModelRequest
@@ -62,12 +58,10 @@ basic syntax in many programming languages.
    - Total requests: 2
    - Tool calls executed: 1
    - Input tokens used: 157
-   - Output tokens generated: 97
+   - Output tokens generated: 92
 
 ============================================================
 ```
-
-> Demonstrates custom tools (`@agent.tool`), usage metrics tracking, message history inspection, and usage limits.
 
 ---
 
@@ -75,38 +69,38 @@ basic syntax in many programming languages.
 
 ```
 === Example 1: Free-Tier Customer ===
-Response: You are eligible for an upgrade to the Pro plan for $9.99 per month.
-    Would you like more information about the benefits of the Pro plan?
+Response: You are eligible for a Pro upgrade, which costs $9.99 per month. Would you like to proceed with the upgrade?
 
 === Example 2: Pro Customer with Purchases ===
-Response: Your Premium Gadget was delivered on March 15, 2025, and the order
-    number is #ORD-42178. If you need any further assistance, feel free to ask!
+Response: Your Premium Gadget order was delivered on March 15, 2025. The order number is #ORD-42178. If you need further assistance, feel free to ask!
 
 === Example 3: Enterprise Customer ===
-Response: You are currently on the 'enterprise' plan, which is the highest tier
-    available. Therefore, there are no upgrade options for you at this time.
+Response: You are currently on the highest tier, the 'enterprise' plan, so there are no upgrade options available for you at this time.
 ```
 
-> Each example injects different customer data via `deps_type` and `RunContext`, showing how the agent adapts behavior based on runtime dependencies.
+> Each run injects different `deps`, and the dynamic system prompt and tools read them via
+> `RunContext` — which is why the same agent answers three different customers correctly.
 
 ---
 
-## 03. Built-in Tools (`03_built_in_tools.py`)
+## 03. Native Tools (`03_built_in_tools.py`)
 
 ```
 === Example 1: Web Search Tool ===
-Response: As of April 17, 2026, the latest stable release of Pydantic AI is
-    version 1.83.0, released on April 16, 2026.
+Response: The latest stable release of Pydantic AI is version 2.0.0, which was released on June 23, 2026. ([pydantic.dev](https://pydantic.dev/docs/ai/project/version-policy/?utm_source=openai)) The most recent release is version 2.6.0, dated July 8, 2026. ([dev.co](https://dev.co/ai/frameworks/pydantic-ai?utm_source=openai))
 
 === Example 2: Code Execution Tool ===
 Response: The first 10 Fibonacci numbers are:
-    [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+
+\[ [0, 1, 1, 2, 3, 5, 8, 13, 21, 34] \]
 
 === Example 3: Combined Web Search + Code Execution ===
-Response: The value of 2^100 is 1,267,650,600,228,229,401,496,703,205,376.
+Response: The value of \( 2^{100} \) is \( 1,267,650,600,228,229,401,496,703,205,376 \).
 ```
 
-> Uses `OpenAIResponsesModel` with `WebSearchTool` and `CodeExecutionTool` from `pydantic_ai.builtin_tools`.
+> The inline citations in Example 1 prove `WebSearchTool` really ran server-side — the model
+> cannot know 2026 release dates from training data. Native tools are passed as
+> `capabilities=[NativeTool(WebSearchTool(...))]` and need the OpenAI Responses API.
 
 ---
 
@@ -131,8 +125,6 @@ Native Output: name='Mike' age=28
 Prompted Output: name='Lisa' age=35
 ```
 
-> Shows Pydantic models as output types, union types, and the three output modes: `ToolOutput`, `NativeOutput`, and `PromptedOutput`.
-
 ---
 
 ## 05. Output Validators (`05_output_validators.py`)
@@ -146,42 +138,29 @@ Email: new@example.com
 --------------------------------------------------
 
 === Test 2: Existing Username (will retry) ===
-Output: username='user_admin' email='fresh@example.com' age=30
-New username suggested: user_admin
+Output: username='admin123' email='fresh@example.com' age=30
+New username suggested: admin123
 
 --------------------------------------------------
 
 📈 Final Metrics:
    - Total requests: 2
    - Tool calls executed: 0
-   - Input tokens used: 203
-   - Output tokens generated: 65
+   - Input tokens used: 215
+   - Output tokens generated: 33
 
 ============================================================
 
-(Streaming output — incremental chunks omitted, final story shown below)
-
-Once upon a time, in a bustling town nestled between rolling hills and whispering
-streams, lived a plump and curious tabby cat named Oliver. With a coat as soft as
-a cloud and eyes that sparkled like emeralds, Oliver's presence brought joy to
-everyone he encountered...
-
-Oliver lived with a kind elderly woman named Mrs. Hargrove in a cozy cottage at
-the end of Maple Street... Mrs. Hargrove would often read books to Oliver, and he
-would curl up on her lap, purring contentedly.
-
-One sunny afternoon, Oliver ventured out into the world, chasing leaves and
-playing hide-and-seek with a chipmunk. He wandered into a bustling park where
-children exclaimed "Look, it's a kitty!" and showered him with affection.
-
-A scruffy dog named Rufus challenged him to a race, and the two became unlikely
-friends. As the sun set, Oliver trotted home to Mrs. Hargrove, his heart full.
-
-From that day forward, Oliver's life was a tapestry woven with laughter, courage,
-and companionship — truly the greatest journey of all.
+In a sleepy little town nestled between rolling
+In a sleepy little town nestled between rolling hills and lush green meadows, there lived a
+In a sleepy little town nestled between rolling hills and lush green meadows, there lived a curious cat named Whiskers...
+...
 ```
 
-> Test 1 passes validation immediately. Test 2 triggers `ModelRetry` because "admin" is taken — the agent retries and suggests "user_admin". The streaming section shows partial output validation accepting incremental chunks, producing a complete story about Oliver the cat.
+> `Total requests: 2` is the proof that validation fired: the validator rejected the taken
+> username `admin`, `ModelRetry` sent the model back, and it returned `admin123` on the second
+> request. The trailing output is the streaming half of the example — each line is a longer
+> prefix of the same story, showing partial output passing through the validator uninterrupted.
 
 ---
 
@@ -189,14 +168,11 @@ and companionship — truly the greatest journey of all.
 
 ```
 === Example 1: TextOutput Post-Processing ===
-Output: {'text': 'Python is a high-level, interpreted programming language known
-    for its simplicity and readability...', 'word_count': 66, 'char_count': 495}
+Output: {'text': 'Python is a high-level, versatile programming language known for its readability and simplicity, ...', 'word_count': 74, 'char_count': 552}
 Type: <class 'dict'>
 
 === Example 2: TextOutput for Format Conversion ===
-Output lines: ['IMPROVES CARDIOVASCULAR HEALTH.',
-    'ENHANCES MENTAL WELL-BEING AND REDUCES STRESS.',
-    'AIDS IN WEIGHT MANAGEMENT AND BODY COMPOSITION.']
+Output lines: ['IMPROVES CARDIOVASCULAR HEALTH AND REDUCES THE RISK OF HEART DISEASE.', 'ENHANCES MENTAL WELL-BEING BY REDUCING SYMPTOMS OF ANXIETY AND DEPRESSION.', 'AIDS IN WEIGHT MANAGEMENT AND PROMOTES HEALTHY BODY COMPOSITION.']
 Type: <class 'list'>
 
 === Example 3: Mixed Output Types ===
@@ -204,7 +180,8 @@ Factual output: answer='The capital of France is Paris.' confidence=1.0
 Type: StructuredAnswer
 ```
 
-> `TextOutput` enables post-processing of plain text (word counting, format conversion). Mixed output types combine structured and text outputs.
+> The `Type:` lines prove the output function ran: the model produced text, but the agent
+> returned a `dict` and a `list` because `TextOutput` post-processed it.
 
 ---
 
@@ -212,16 +189,19 @@ Type: StructuredAnswer
 
 ```
 === Streaming with Custom Handler ===
-[EVENT] Tool called: get_weather with args: {"location":"Paris","date":"2023-10-08"}
+[EVENT] Tool called: get_weather with args: {"location":"Paris","date":"2023-10-05"}
 [EVENT] Final result started (tool: None)
-Tomorrow in Paris, the weather will be sunny with a temperature of 24°C.
+Tomorrow in Paris, the weather will beTomorrow in Paris, the weather will be sunny with a temperatureTomorrow in Paris, the weather will be sunny with a temperature of 24°C.
+
 
 === Stream All Events and filtering ===
 [STREAM EVENT] Tool call: get_weather
 [STREAM EVENT] Final result event: None
 ```
 
-> Demonstrates `run_stream` with custom event handlers that intercept tool calls and final result events in real time.
+> The run-together text is `stream_text()` emitting a longer prefix each chunk. In v2
+> `run_stream_events()` is an async context manager, so the second section is
+> `async with agent.run_stream_events(...) as events:` wrapping the `async for`.
 
 ---
 
@@ -229,9 +209,7 @@ Tomorrow in Paris, the weather will be sunny with a temperature of 24°C.
 
 ```
 === Basic Conversation ===
-Response: The joke is a play on words combining "Colgate," a well-known
-    toothpaste brand, with the word "colgate," which sounds like "cold gate."
-    The humor comes from the unexpected connection...
+Response: The joke plays on a pun with the word "Colgate," which is a well-known brand of toothpaste. ...
 
 === Message Inspection ===
 Total messages in conversation: 3
@@ -243,10 +221,9 @@ Total messages in conversation: 3
       Part 1: TextPart
 
 === Storing and Loading Messages ===
-Serialized 2067 bytes to JSON
+Serialized 2379 bytes to JSON
 Loaded 3 messages from JSON
-Response of History Agent using loaded history: We discussed a joke involving the
-    word "Colgate" and its play on sound with "cold gate."...
+Response of History Agent using loaded history: We discussed a joke that involves the word "Colgate" and a pun regarding a "toothpaste scandal." ...
 
 === New History after Context-Aware Processing ===
    Message 1: ModelRequest
@@ -257,7 +234,10 @@ Response of History Agent using loaded history: We discussed a joke involving th
       Part 1: TextPart
 ```
 
-> Shows multi-turn conversations, message serialization to JSON, loading history into new agents, and message structure inspection.
+> History processors are now the `ProcessHistory` capability
+> (`capabilities=[ProcessHistory(fn)]`), replacing the removed `history_processors=` argument.
+> The last section shows the context-aware processor at work: it dropped the earlier
+> `ModelResponse` messages, leaving only requests plus the final response.
 
 ---
 
@@ -268,18 +248,22 @@ Response of History Agent using loaded history: We discussed a joke involving th
 
   Generating 5 jokes...
 Selected joke:
-Here's a great one: **What do you call a pile of cats? A meowtain!**
+Here's the best cat joke for you:
+
+**Why was the cat sitting on the computer? Because it wanted to keep an eye on the mouse!** 🐱💻
+
 
 📈 Final Metrics:
    - Total requests: 3
    - Tool calls executed: 1
-   - Input tokens used: 303
-   - Output tokens generated: 142
+   - Input tokens used: 297
+   - Output tokens generated: 151
 
 ============================================================
 ```
 
-> A "selector" agent delegates joke generation to a "joke generator" agent via a tool call, then picks the best one.
+> `Total requests: 3` covers both agents — passing `usage=ctx.usage` into the delegate run is
+> what makes the parent's usage include the child's.
 
 ---
 
@@ -312,28 +296,22 @@ Step 3: Booking Summary
 ============================================================
 ```
 
-> Three specialized agents (flight search, seat selection, summary) are chained programmatically, passing structured outputs between steps.
-
 ---
 
 ## 11. Toolsets (`11_toolsets.py`)
 
 ```
 === Example 1: FunctionToolset ===
-Response: The weather in Paris is sunny with a temperature of 22°C, and its
-    population is approximately 2.1 million.
+Response: The current weather in Paris is sunny with a temperature of 22°C, and its population is approximately 2.1 million.
 
 === Example 2: PrefixedToolset ===
-Response: The weather in London is cloudy with a temperature of 14°C. Also,
-    100 USD is equal to 92.00 EUR.
+Response: The weather in London is cloudy with a temperature of 14°C. Additionally, 100 USD is equivalent to 92.00 EUR.
 
 === Example 3: FilteredToolset ===
-Response: The weather in Tokyo is currently rainy with a temperature of 18°C.
+Response: The current weather in Tokyo is rainy with a temperature of 18°C.
 
 Filtered toolset only exposes weather tools, population tool is hidden.
 ```
-
-> Demonstrates `FunctionToolset`, `PrefixedToolset`, `FilteredToolset`, and `CombinedToolset` for composable tool management.
 
 ---
 
@@ -342,13 +320,22 @@ Filtered toolset only exposes weather tools, population tool is hidden.
 ```
 === MCP Client Example ===
 
-MCP connection error: unhandled errors in a TaskGroup (1 sub-exception)
+Step 1: Listing files through the MCP server...
+Response: The files in the current directory are:
+- settings.py
+- utils.py
+- 12_mcp_client.py
+MCP tools called: ['fs_list_files']
 
-This is expected if the MCP server binary is not installed.
-The example demonstrates the MCP client configuration pattern.
+Step 2: Reading a file through the MCP server...
+Response: The configured model in the `settings.py` file is `"openai-chat:gpt-4o-mini"`.
+MCP tools called: ['fs_list_files', 'fs_read_file']
 ```
 
-> Exits gracefully when no MCP server is available. The code demonstrates the `MCPServerStdio` configuration pattern for connecting agents to MCP-compatible tool servers.
+> The `fs_` prefix on the called tool names is the proof that `PrefixedToolset` is applied —
+> the MCP server itself exposes them as `list_files` / `read_file`. v2 removed `MCPToolset`'s
+> `tool_prefix` argument, so wrapping the toolset is now the way to namespace MCP tools.
+> The server runs in-process, so this example needs no Node.js and no subprocess.
 
 ---
 
@@ -376,7 +363,7 @@ Total steps: 6
   Node: CallToolsNode | Messages so far: 4
   Node: End | Messages so far: 4
 
-Final output: The current temperature in Paris is 22°C, while in Tokyo it is 18°C.
+Final output: The current temperature in Paris is 22°C, and in Tokyo, it is 18°C.
 Total messages: 4
 
 === Example 3: Usage Tracking During Iteration ===
@@ -388,12 +375,9 @@ Total messages: 4
   CallToolsNode: requests=2, tool_calls=2, tokens=278
   End: requests=2, tool_calls=2, tokens=278
 
-Final output: The current temperature in London is 14°C, while in Lisbon it is
-26°C. Lisbon is significantly warmer than London at the moment.
+Final output: The current temperature in London is 14°C, while in Lisbon, it is 26°C. Lisbon is significantly warmer than London right now.
 Final usage: 2 requests, 2 tool calls
 ```
-
-> Uses `agent.iter()` to step through agent execution node-by-node, inspecting messages and usage at each step.
 
 ---
 
@@ -427,20 +411,33 @@ Final state:
 
 Mermaid Diagram of Graph:
 ---
-title: vending_machine_graph
+title: Vending Machine
 ---
 stateDiagram-v2
-  [*] --> InsertCoin
-  InsertCoin --> CoinsInserted
-  CoinsInserted --> SelectProduct
-  CoinsInserted --> Purchase
-  SelectProduct --> Purchase
-  Purchase --> InsertCoin
-  Purchase --> SelectProduct
-  Purchase --> [*]
+  direction TB
+  insert_coin
+  state decision <<choice>>
+  purchase
+  select_product
+  state decision_2 <<choice>>
+
+  [*] --> insert_coin
+  insert_coin --> decision
+  decision --> purchase: product chosen
+  decision --> select_product: nothing chosen yet
+  select_product --> purchase
+  purchase --> decision_2
+  decision_2 --> insert_coin: insufficient funds
+  decision_2 --> [*]: paid
 ```
 
-> A deterministic vending machine modeled with `pydantic-graph` — `BaseNode`, `End`, `Graph`, and mermaid diagram generation.
+> Rewritten for the v2 `GraphBuilder` API: `pydantic_graph.Graph` is now the builder's graph
+> type, and the old `BaseNode` runner modules (`graph.py`, `nodes.py`, `mermaid.py`) were
+> deleted. Routing is by return type — `purchase` returns `str | NeedMoreCoins`, and the
+> decision node sends `NeedMoreCoins` back to `insert_coin`, which is the cycle visible in the
+> diagram and in the "Insufficient funds → Inserted $0.50" sequence above.
+> `graph.run()` is keyword-only and returns the output directly; `mermaid_code()` is now
+> `Graph.render()`.
 
 ---
 
@@ -450,37 +447,42 @@ stateDiagram-v2
 === Graphs with GenAI: Content Review Pipeline ===
 
 ============================================================
-  [Writer] Draft v1: Open source software offers numerous benefits,
-      including enhanced security, as t...
+  [Writer] Draft v1: Open source software offers numerous benefits, including enhanced security, tran...
+  [Reviewer] Needs revision: Include a concrete real-world project, such as Linux or Apac...
+  [Writer] Draft v2: Open source software, such as Linux, exemplifies the numerous benefits it offers...
   [Reviewer] APPROVED
 
 ============================================================
 
-Final content: Open source software offers numerous benefits, including
-    enhanced security, as the code is publicly accessible for review and
-    improvement by a global community. It fosters innovation through
-    collaboration and allows users to customize the software to meet their
-    specific needs. Furthermore, open source solutions often reduce costs,
-    making high-quality technology accessible to individuals and
-    organizations alike.
-Revisions: 1
+Final content: Open source software, such as Linux, exemplifies the numerous benefits it offers, including enhanced security, transparency, and community collaboration. Users can inspect, modify, and improve the code, which fosters innovation and rapid problem-solving. Furthermore, open source solutions often reduce costs by eliminating licensing fees and allowing organizations to tailor software to their specific needs.
+Revisions: 2
 Approved: True
 
-Revision history (1 versions):
+Revision history (2 versions):
   - Draft v1: Open source software offers numerous benefits, including enhanced secu...
+  - Draft v2: Open source software, such as Linux, exemplifies the numerous benefits...
 
 Mermaid Diagram:
 ---
-title: review_pipeline
+title: Content Review Pipeline
 ---
 stateDiagram-v2
-  [*] --> WriteDraft
-  WriteDraft --> ReviewDraft
-  ReviewDraft --> WriteDraft
-  ReviewDraft --> [*]
+  direction TB
+  write_draft
+  review_draft
+  state decision <<choice>>
+
+  [*] --> write_draft
+  write_draft --> review_draft
+  review_draft --> decision
+  decision --> write_draft: revise
+  decision --> [*]: approved
 ```
 
-> Combines `pydantic-graph` with Pydantic AI agents: a writer agent drafts content, a reviewer agent approves or requests revisions, looping until approved.
+> The v1→v2 revision is the feedback loop actually executing: the reviewer agent rejected the
+> first draft, the graph routed back to `write_draft`, and the second draft (now naming Linux)
+> was approved. Also rewritten for `GraphBuilder` — the agents are called from inside
+> `@g.step` functions.
 
 ---
 
@@ -506,11 +508,11 @@ Step 3: Continue execution with approved Reads but denied Deletes
 ============================================================
 
 Final result:
-I successfully read the content of the README.md and .env files. However,
-I wasn't able to delete temp.log, as file deletion is not allowed.
-```
+I have successfully read the contents of both the `README.md` and `.env` files. However, I was
+unable to delete the `temp.log` file due to restrictions on file deletion.
 
-> Uses `DeferredToolRequests` to intercept tool calls before execution, simulating human approval/denial of sensitive operations.
+If you need something specific from the `README.md` or `.env`, please let me know!
+```
 
 ---
 
@@ -525,44 +527,88 @@ Evaluating ask_capital ━━━━━━━━━━━━━━━━━━━
 ┏━━━━━━━━━━━┳━━━━━━━━━━┓
 ┃ Case ID   ┃ Duration ┃
 ┡━━━━━━━━━━━╇━━━━━━━━━━┩
-│ france    │  575.9ms │
+│ france    │  955.9ms │
 ├───────────┼──────────┤
-│ japan     │     1.1s │
+│ japan     │  803.3ms │
 ├───────────┼──────────┤
-│ portugal  │     1.8s │
+│ portugal  │  702.0ms │
 ├───────────┼──────────┤
-│ australia │  552.1ms │
+│ australia │  752.8ms │
 ├───────────┼──────────┤
-│ Averages  │  996.2ms │
+│ Averages  │  803.5ms │
 └───────────┴──────────┘
 ```
 
-> Uses `pydantic-evals` with `Dataset`, `Case`, and `evaluate_sync` to run a structured evaluation of agent responses against expected answers.
+> The dataset defines `expected_output` but attaches no evaluator, so the report has timings
+> only. See `25_agentic_evals.py` for a dataset with evaluators attached and scored.
 
 ---
 
 ## 18. A2A Protocol (`18_a2a.py`)
 
 ```
-(Server file — starts a long-running ASGI server, timed out during batch run)
+=== A2A Protocol Example ===
 
-Verified: imports succeed and FastA2A app is created.
-Run with: uvicorn 18_a2a:app
+Starting Math Tutor A2A server...
+  Agent: Math Tutor
+  Protocol: A2A (Agent-to-Agent)
+  URL: http://localhost:8000
+
+Test with:
+  curl -X POST http://localhost:8000/ \
+    -H "Content-Type: application/json" \
+    -d '{"jsonrpc":"2.0","method":"message/send","id":"1","params":
+        {"message":{"role":"user","kind":"message","messageId":"m1",
+          "parts":[{"kind":"text","text":"What is 15 * 23?"}]}}}'
+
+Agent card: http://localhost:8000/.well-known/agent-card.json
+
+INFO:     Started server process [67890]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
-> Exposes a Pydantic AI agent as an A2A-compatible ASGI server using `agent.to_a2a()` from the `fasta2a` package. This is a server process and does not produce terminal output when run directly.
+Agent card (`GET /.well-known/agent-card.json`):
+
+```json
+{"name":"Math Tutor Agent","description":"A helpful math tutor that can explain and calculate.","url":"http://localhost:8000","version":"1.0.0","protocolVersion":"0.3.0","skills":[],"defaultInputModes":["application/json"],"defaultOutputModes":["application/json"],"capabilities":{"streaming":false,"pushNotifications":false,"stateTransitionHistory":false}}
+```
+
+Response to `message/send`:
+
+```json
+{"jsonrpc":"2.0","id":"1","result":{"id":"94cb3d01-6b9d-4340-a0fe-3fe52417096c","contextId":"d0d033f0-2cd4-44d0-a9a0-4a6cd9ebb92c","kind":"task","status":{"state":"submitted","timestamp":"2026-08-08T02:40:35.915422"},"history":[{"role":"user","parts":[{"kind":"text","text":"What is 15 * 23?"}],"kind":"message","messageId":"m1","taskId":"94cb3d01-6b9d-4340-a0fe-3fe52417096c","contextId":"d0d033f0-2cd4-44d0-a9a0-4a6cd9ebb92c"}]}}
+```
+
+> This example runs a server, so it is verified by curl rather than by exiting. v2 deleted the
+> `agent.to_a2a()` method and the `pydantic-ai-slim[a2a]` extra; the replacement is
+> `fasta2a.pydantic_ai.agent_to_a2a(agent, ...)` from the separate `fasta2a` package, which
+> takes the same keyword arguments.
 
 ---
 
 ## 19. Capabilities (`19_capabilities.py`)
 
 ```
-(Not executed — batch run timed out on previous example)
+=== Example 1: Built-in Thinking Capability ===
+Response: 7 * 13 = 91.
 
-Run individually with: python 19_capabilities.py
+=== Example 2: Custom MathTools Capability ===
+Response: The result of \( 42 + 58 \) is \( 100 \), and \( 7 \times 9 \) is \( 63 \).
+
+=== Example 3: Composing Multiple Capabilities ===
+  [Hook] Agent 'math_agent' sending request...
+  [Hook] Response received
+  [Hook] Agent 'math_agent' sending request...
+  [Hook] Response received
+Response: 15 * 4 = 60.
+
+The [Hook] log lines above prove the Hooks capability intercepted the lifecycle.
 ```
 
-> Demonstrates Pydantic AI agent capability declarations and feature discovery. Run this example individually as it was not reached during the batch execution.
+> Two `[Hook]` request/response pairs = two model requests: one that called the `multiply`
+> tool, one that turned the tool result into the final answer.
 
 ---
 
@@ -573,29 +619,32 @@ Run individually with: python 19_capabilities.py
 Response: The capital of Portugal is Lisbon.
 
 === Example 2: AgentSpec from YAML ===
-Response: Arrr, matey! Did ye know that octopuses have three hearts?
+Response: Arrr, matey! Did ye know that octopuses be havin' three hearts? Two pump blood to their gills, while the third keeps the rest o' the body goin'! Aye, a fascinating creature of the sea!
 
 === Example 3: Save and Load from File ===
-Saved spec to /tmp/.../agent_spec.yaml
+Saved spec to /var/folders/qm/1yt5968d2fq18bjj_zff6jtc0000gn/T/tmpdf6ob6zn/agent_spec.yaml
 Contents:
-model: gpt-4o-mini
+model: openai-chat:gpt-4o-mini
 name: dict_agent
 instructions: Be concise. Reply in one sentence.
 model_settings:
   temperature: 0.3
-output_retries: 2
+retries:
+  output: 2
 
 Response from reloaded spec: 2 + 2 equals 4.
 
 === Example 4: Inspect Spec Fields ===
 Name: dict_agent
-Model: gpt-4o-mini
-Output retries: 2
+Model: openai-chat:gpt-4o-mini
+Retries: {'output': 2}
 Instructions: Be concise. Reply in one sentence.
 Model settings: {'temperature': 0.3}
 ```
 
-> Uses `AgentSpec` for declarative agent configuration with `output_retries` (replacing deprecated `retries`), YAML/JSON serialization, and `Agent.from_spec()`.
+> `AgentSpec.output_retries` became `retries: int | AgentRetries`. This one is a silent
+> breakage: `AgentSpec` ignores unknown keys, so a spec still carrying `output_retries` builds
+> and runs fine and only fails later with an `AttributeError` when something reads the field.
 
 ---
 
@@ -606,20 +655,25 @@ Model settings: {'temperature': 0.3}
 Response: The weather in Paris is sunny with a temperature of 22°C.
 Usage: 188 input tokens
 
-=== Example 2: tool_choice='required' ===
-Response: Tokyo is currently experiencing rainy weather with a temperature of
-    18°C. The city's population is approximately 13.9 million.
-Usage: 226 input tokens
+=== Example 2: ToolOrOutput(['get_weather']) ===
+Response: Tokyo's current weather is rainy with a temperature of 18°C.
+
+As for its population, Tokyo is one of the most populous cities in the world, with a metropolitan area population exceeding 37 million people.
+(Only get_weather was offered; get_population was withheld)
+Usage: 194 input tokens
 
 === Example 3: tool_choice='none' ===
-Response: The weather in London is cloudy with a temperature of 14°C.
+Response: I'll check the current weather in London for you.
 (Model answered from training data, no tools called)
 
-=== Example 4: Agent-level tool_choice ===
-Response: 42 * 7 equals 294.
+=== Example 4: ToolOrOutput(['calculate']) ===
+Response: The result of \( 42 \times 7 \) is 294.
 ```
 
-> Demonstrates `tool_choice` model setting: `'auto'` lets the model decide, `'required'` forces tool use, `'none'` disables tools. Can be set per-run or at agent level.
+> Example 2 shows the restriction working: the weather figure (18°C) comes from the tool, while
+> the population figure comes from the model's own knowledge because `get_population` was
+> withheld. This example only behaves this way on the Chat Completions API — see the note in
+> the README about the `openai-chat:` prefix.
 
 ---
 
@@ -627,25 +681,28 @@ Response: 42 * 7 equals 294.
 
 ```
 === Example 1: CombinedCapability ===
-Response: The sum of 15 and 27 is 42, and the word count in 'hello world foo' is 3.
+Response: The sum of 15 and 27 is 42, and there are 3 words in "hello world foo."
 
 === Example 2: CapabilityOrdering ===
   [Hook] Sending request (step 1)...
   [Hook] Sending request (step 2)...
 Response: The result of 8 * 12 is 96.
 
-=== Example 3: output_retries (replaces deprecated retries) ===
-Response: The speed of light in a vacuum is approximately 299,792 kilometers per
-    second (about 186,282 miles per second).
+=== Example 3: retries={'output': N} ===
+Response: The speed of light in a vacuum is approximately 299,792,458 meters per second.
 
 === Example 4: PrepareTools Capability ===
 Response: The sum of 100 and 200 is 300.
 (Only math tools were available despite TextCapability being registered)
 ```
 
-> Shows `CombinedCapability` for bundling capabilities, `CapabilityOrdering` for controlling evaluation order, `output_retries` replacing deprecated `retries`, and `PrepareTools` for runtime tool filtering.
+> Example 1 answers both halves of the question, proving `CombinedCapability` really bundled
+> the math and text toolsets. `Agent(output_retries=N)` is now `Agent(retries={'output': N})`,
+> which can also set a separate `tools` budget.
 
-## 23_tool_search.py
+---
+
+## 23. Tool Search (`23_tool_search.py`)
 
 ```
 === Tool Search: Deferred Loading ===
@@ -657,7 +714,7 @@ Q: Convert 100 USD to EUR
 A: 100 USD is equivalent to 92.00 EUR.
 
 Q: Calculate the tip on a $85 bill at 20%
-A: The tip on an $85 bill at 20% is $17.00.
+A: The tip on an $85 bill at 20% would be $17.
 
 === Tool Configuration ===
   get_weather:      defer_loading=False (always visible)
@@ -667,4 +724,118 @@ A: The tip on an $85 bill at 20% is $17.00.
   get_time_zone:    defer_loading=True  (discovered via search)
 ```
 
-> Demonstrates deferred tool loading — only `get_weather` is immediately visible to the model, while other tools are discovered via tool search when needed.
+> Questions 2 and 3 are answered by tools that were never sent to the model up front — the
+> agent had to discover them through tool search first.
+
+---
+
+## 24. Cost and Usage Limits (`24_cost_and_usage_limits.py`)
+
+```
+=== Example 1: RunUsage.cost ===
+Response: The highest mountain in Europe is Mount Elbrus.
+Input tokens:  27
+Output tokens: 11
+Cost (USD):    0.00001065
+
+=== Example 2: UsageLimits(cost_limit=...) ===
+Budget of $1E-7 USD enforced -> UsageLimitExceeded
+  Exceeded the `cost_limit` of 1E-7 (`usage.cost`=Decimal('0.0000453')). Consider raising the limit, or see the docs on usage limits for budget-aware patterns: ...
+
+=== Example 3: per_request_input_tokens_limit ===
+A single request exceeding 100 input tokens was rejected
+  Exceeded the per_request_input_tokens_limit of 100 (request_input_tokens=2026). Consider raising the limit, or see the docs on usage limits for budget-aware patterns: ...
+
+=== Example 4: Aggregating RunUsage across runs ===
+First run : input=  27  output=  7  cost=$0.00000825
+Second run: input=  27  output=  7  cost=$0.00000825
+Combined  : input=  54  output= 14  cost=$0.00001650
+Cache hit ratio across both runs: 0.00%
+```
+
+> `cost` is a real USD `Decimal` computed by pydantic-ai (via genai-prices), not a token count
+> multiplied by a hard-coded price. Examples 2 and 3 both abort the run with
+> `UsageLimitExceeded`, which is the point: the budget is enforced, not merely reported.
+> `cache_hit_ratio` is 0% because these prompts are far below OpenAI's 1024-token prompt-cache
+> threshold.
+
+---
+
+## 25. Agentic Evals (`25_agentic_evals.py`)
+
+```
+=== Agentic Evals: grading the agent's trajectory ===
+
+Evaluating handle_ticket ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+                       Evaluation Summary: handle_ticket
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Case ID         ┃ Scores          ┃ Metrics          ┃ Assertions ┃ Duration ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ lost_order_ref… │ TrajectoryMatch │ requests: 3      │ ✔✔✔✔       │     2.7s │
+│                 │ : 1.00          │ input_tokens:    │            │          │
+│                 │ GEval: 4        │ 455              │            │          │
+├─────────────────┼─────────────────┼──────────────────┼────────────┼──────────┤
+│ delivered_orde… │ GEval: 5        │ requests: 2      │ ✔✔✔        │     1.6s │
+│                 │                 │ input_tokens:    │            │          │
+│                 │                 │ 254              │            │          │
+├─────────────────┼─────────────────┼──────────────────┼────────────┼──────────┤
+│ Averages        │ TrajectoryMatch │ requests: 2.50   │ 100.0% ✔   │     2.2s │
+│                 │ : 1.00          │ input_tokens:    │            │          │
+│                 │ GEval: 4.50     │ 354.5            │            │          │
+└─────────────────┴─────────────────┴──────────────────┴────────────┴──────────┘
+
+
+=== Per-case evaluator breakdown ===
+
+lost_order_refunded
+  answer: A refund for order A-200 has been issued due to it being lost in transit.
+  [PASS] ToolCorrectness: None
+  [PASS] ArgumentCorrectness: None
+  [PASS] MaxToolCalls: 2 tool call(s), budget=3
+  [PASS] MaxModelRequests: 3 model request(s) (from ctx.metrics['requests']), budget=4
+  [score] TrajectoryMatch: 1.0
+  [score] GEval: 4
+
+delivered_order_not_refunded
+  answer: Order A-100 has been delivered.
+  [PASS] ToolCorrectness: None
+  [PASS] MaxToolCalls: 1 tool call(s), budget=3
+  [PASS] MaxModelRequests: 2 model request(s) (from ctx.metrics['requests']), budget=4
+  [score] GEval: 5
+```
+
+> These evaluators grade *how* the agent worked, not just its answer. `ToolCorrectness` and
+> `TrajectoryMatch` read the OpenTelemetry span tree, so the lost-order case passes only
+> because the agent really called `lookup_order` then `issue_refund` in that order, and
+> `ArgumentCorrectness` passes only because the refund was issued for `A-200`. The delivered
+> case asserts the opposite — `lookup_order` alone, no refund. Spans are captured locally via
+> `logfire.configure(send_to_logfire=False)`; no Logfire account or network access is required.
+
+---
+
+## 26. Tool Failures (`26_tool_failures.py`)
+
+```
+=== Example 1: ModelRetry (recoverable) ===
+  [tool] lookup_employee('1001')
+  [tool] lookup_employee('E-1001')
+Response: Employee E-1001 is Ana Ribeiro.
+lookup_employee calls: 2
+(ModelRetry sent the model back to fix its own argument)
+
+=== Example 2: ToolFailed (terminal) ===
+  [tool] fetch_employee('E-9999')
+Response: The lookup for employee E-9999 failed permanently as they do not exist in the directory.
+fetch_employee calls: 1
+(ToolFailed is terminal, so the model did not call it again)
+
+=== Example 3: RunContext.is_tool_available ===
+  [tool] payroll_report: is_tool_available('fetch_salary') -> False
+Response: I am unable to generate the payroll report for employee E-1001 as the payroll reporting feature is currently unavailable.
+(The tool checked its own dependency before failing terminally)
+```
+
+> The call counts are the whole point, and they are counted at runtime rather than asserted in
+> prose: `ModelRetry` produced a second call with a corrected argument (`'1001'` → `'E-1001'`),
+> while `ToolFailed` produced exactly one call because it is terminal and does not consume the
+> retry budget.

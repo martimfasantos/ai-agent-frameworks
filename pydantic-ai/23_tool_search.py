@@ -21,7 +21,7 @@ providers that support native tool search (Anthropic, OpenAI),
 the discovery is handled server-side for optimal performance.
 
 For more details, visit:
-https://ai.pydantic.dev/tools-toolsets/toolsets/
+https://pydantic.dev/docs/ai/capabilities/tool-search/
 -------------------------------------------------------
 """
 

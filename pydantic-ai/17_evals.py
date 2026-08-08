@@ -21,7 +21,7 @@ verify that your agents produce correct results and catch regressions
 when models or prompts change.
 
 For more details, visit:
-https://ai.pydantic.dev/evals/
+https://pydantic.dev/docs/ai/evals/evals/
 -----------------------------------------------------------------------
 """
 

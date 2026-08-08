@@ -5,7 +5,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.capabilities import AbstractCapability, Hooks, Thinking, WebSearch
+from pydantic_ai.capabilities import AbstractCapability, Hooks, Thinking
 from pydantic_ai.toolsets import FunctionToolset
 
 from settings import settings
@@ -27,7 +27,7 @@ and pass it via the `capabilities` parameter. This makes agent
 configuration modular and reusable across projects.
 
 For more details, visit:
-https://ai.pydantic.dev/capabilities/
+https://pydantic.dev/docs/ai/capabilities/overview/
 -----------------------------------------------------------------------
 """
 
@@ -68,14 +68,14 @@ hooks = Hooks()
 
 
 @hooks.on.before_model_request
-async def log_request(ctx: RunContext[None], request_context):
+async def log_request(ctx: RunContext, request_context):
     agent_name = ctx.agent.name if ctx.agent else "unknown"
     print(f"  [Hook] Agent '{agent_name}' sending request...")
     return request_context
 
 
 @hooks.on.after_model_request
-async def log_response(ctx: RunContext[None], *, request_context, response):
+async def log_response(ctx: RunContext, *, request_context, response):
     print(f"  [Hook] Response received")
     return response
 

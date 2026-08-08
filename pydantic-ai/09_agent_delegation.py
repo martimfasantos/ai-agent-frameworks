@@ -19,7 +19,7 @@ to another agent, then takes back control when the delegate agent
 (the agent called from within a tool) finishes.
 
 For more details, visit:
-https://ai.pydantic.dev/multi-agent-applications/#agent-delegation
+https://pydantic.dev/docs/ai/guides/multi-agent-applications/#agent-delegation
 -----------------------------------------------------------------------
 """
 
@@ -42,7 +42,7 @@ joke_selector = Agent(
 
 # --- 3. Define delegation tool that calls the specialist agent ---
 @joke_selector.tool
-async def joke_factory(ctx: RunContext[None], count: int) -> list[str]:
+async def joke_factory(ctx: RunContext, count: int) -> list[str]:
     print(f"  Generating {count} jokes...")
 
     # Delegate to specialist agent, passing usage for tracking

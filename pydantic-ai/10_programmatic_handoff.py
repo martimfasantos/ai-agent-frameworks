@@ -26,7 +26,7 @@ agent runs independently, and the application passes context via message history
 between runs. This is useful when the orchestration logic is deterministic.
 
 For more details, visit:
-https://ai.pydantic.dev/multi-agent-applications/#programmatic-agent-hand-off
+https://pydantic.dev/docs/ai/guides/multi-agent-applications/#programmatic-agent-hand-off
 -----------------------------------------------------------------------
 """
 

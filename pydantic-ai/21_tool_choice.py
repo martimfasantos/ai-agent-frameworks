@@ -26,7 +26,7 @@ variation from a capability); for text-output agents, use ToolOrOutput
 so the agent can still produce a final answer.
 
 For more details, visit:
-https://ai.pydantic.dev/agents/#model-settings
+https://pydantic.dev/docs/ai/tools-toolsets/tools-advanced/#tool-choice
 -----------------------------------------------------------------------
 """
 

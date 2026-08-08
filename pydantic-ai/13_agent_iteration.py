@@ -23,7 +23,7 @@ each node (user prompt handling, model requests, tool calls) as it executes,
 enabling logging, debugging, or custom control flow between steps.
 
 For more details, visit:
-https://ai.pydantic.dev/agents/#agent-level-iteration
+https://pydantic.dev/docs/ai/core-concepts/agent/#iterating-over-an-agents-graph
 -----------------------------------------------------------------------
 """
 

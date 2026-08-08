@@ -23,16 +23,18 @@ In this example, we explore Pydantic AI with the following features:
 - CombinedCapability for bundling multiple capabilities together
 - CapabilityOrdering for controlling capability evaluation order
 - PrepareTools for dynamically filtering or modifying tools at runtime
-- output_retries replacing deprecated retries parameter
+- Per-category retry budgets via Agent(retries={'output': N})
 
 These advanced capability patterns enable fine-grained control over
 agent behavior composition. CombinedCapability bundles related
 capabilities into reusable packages. CapabilityOrdering controls which
 capability gets priority when multiple provide conflicting settings.
-PrepareTools allows runtime tool filtering based on context.
+PrepareTools allows runtime tool filtering based on context. The
+`retries` mapping sets separate retry budgets for tool calls and for
+output validation.
 
 For more details, visit:
-https://ai.pydantic.dev/capabilities/
+https://pydantic.dev/docs/ai/capabilities/overview/
 -----------------------------------------------------------------------
 """
 
@@ -122,7 +124,7 @@ async def main():
     hooks = Hooks()
 
     @hooks.on.before_model_request
-    async def log_request(ctx: RunContext[None], request_context):
+    async def log_request(ctx: RunContext, request_context):
         print(f"  [Hook] Sending request (step {ctx.run_step})...")
         return request_context
 
@@ -141,14 +143,14 @@ async def main():
     print(f"Response: {result2.output}\n")
 
     # ------------------------------------------------------------------
-    # Example 3: output_retries -- new retry parameter
+    # Example 3: retries -- per-category retry budgets
     # ------------------------------------------------------------------
-    print("=== Example 3: output_retries (replaces deprecated retries) ===")
+    print("=== Example 3: retries={'output': N} ===")
 
     agent3 = Agent(
         model=settings.OPENAI_MODEL_NAME,
         instructions="Be concise. Reply in one sentence.",
-        output_retries=3,  # New parameter replacing deprecated 'retries'
+        retries={"output": 3},  # v2 replaced output_retries with this mapping
     )
 
     result3 = await agent3.run("What is the speed of light?")

@@ -10,6 +10,7 @@ from pydantic_ai import (
     TextPart,
     UserPromptPart,
 )
+from pydantic_ai.capabilities import ProcessHistory
 from pydantic_ai.messages import ModelMessagesTypeAdapter
 from pydantic_core import to_json
 
@@ -24,7 +25,7 @@ In this example, we explore Pydantic AI with the following features:
 - Multi-turn conversations with persistent message history
 - Accessing and inspecting message history from agent results
 - JSON serialization and deserialization of conversation history
-- History processors for filtering and managing message content
+- The ProcessHistory capability for filtering and managing message content
 - Context preservation across multiple agent interactions
 
 This example demonstrates how to manage conversation history and context with Pydantic AI.
@@ -36,7 +37,7 @@ conversational AI applications like chatbots, virtual assistants, and any system
 requiring contextual understanding across interactions.
 
 For more details, visit:
-https://ai.pydantic.dev/message-history/
+https://pydantic.dev/docs/ai/core-concepts/message-history/
 -----------------------------------------------------------------------
 """
 
@@ -50,7 +51,7 @@ async def keep_recent_messages(messages: list[ModelMessage]) -> list[ModelMessag
 
 # 1.2 Context-aware history processor example
 def context_aware_processor(
-    ctx: RunContext[None],
+    ctx: RunContext,
     messages: list[ModelMessage],
 ) -> list[ModelMessage]:
     # Access current usage
@@ -66,17 +67,17 @@ def context_aware_processor(
         ]  # Keep only user requests otherwise
 
 
-# --- 2. Agents with History Processor ---
+# --- 2. Agents with the ProcessHistory capability ---
 history_agent = Agent(
     model=settings.OPENAI_MODEL_NAME,
     instructions="You are a helpful assistant",
-    history_processors=[keep_recent_messages],  # can add more than one processor
+    capabilities=[ProcessHistory(keep_recent_messages)],  # can add more than one
 )
 
 context_aware_agent = Agent(
     model=settings.OPENAI_MODEL_NAME,
     instructions="You are a helpful assistant",
-    history_processors=[context_aware_processor],
+    capabilities=[ProcessHistory(context_aware_processor)],
 )
 
 # --- 3. Run Examples ---

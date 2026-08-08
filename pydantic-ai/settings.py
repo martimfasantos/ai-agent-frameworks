@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 # Use pydantic base settings for basic settings read from a .env file
 class Settings(BaseSettings):
     OPENAI_API_KEY: pydantic.SecretStr
-    OPENAI_MODEL_NAME: str = "gpt-4o-mini"
+    OPENAI_MODEL_NAME: str = "openai-chat:gpt-4o-mini"
 
     class Config:
         env_file = ".env"

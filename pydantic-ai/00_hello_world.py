@@ -18,7 +18,7 @@ minimal setup needed to create and run an agent that responds to a
 single user prompt.
 
 For more details, visit:
-https://ai.pydantic.dev/agents/
+https://pydantic.dev/docs/ai/core-concepts/agent/
 -------------------------------------------------------
 """
 
