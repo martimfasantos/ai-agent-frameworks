@@ -11,7 +11,9 @@ from crewai.events import (
     TaskCompletedEvent,
     ToolUsageStartedEvent,
     ToolUsageFinishedEvent,
+    FlowFailedEvent,
 )
+from crewai.flow import Flow, start
 
 from settings import settings
 
@@ -22,6 +24,7 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 In this example, we explore CrewAI with the following features:
 - Custom event listeners using BaseEventListener
 - Listening to crew, agent, task, and tool events
+- FlowFailedEvent, emitted when a flow raises
 - Real-time monitoring and logging of crew execution
 
 Event listeners provide a powerful way to monitor and react to
@@ -71,6 +74,10 @@ class ExecutionMonitor(BaseEventListener):
         def on_tool_finish(source, event):
             print(f"[MONITOR] Tool usage finished: {event.tool_name}")
 
+        @crewai_event_bus.on(FlowFailedEvent)
+        def on_flow_failed(source, event):
+            print(f"[MONITOR] Flow failed: {event.flow_name} - {event.error}")
+
 
 # --- 2. Instantiate the listener (registration happens automatically) ---
 monitor = ExecutionMonitor()
@@ -99,3 +106,16 @@ crew = Crew(
 
 result = crew.kickoff()
 # The monitor will print event logs as the crew executes
+
+
+# --- 5. A flow that raises, so FlowFailedEvent has something to report ---
+class FailingFlow(Flow):
+    @start()
+    def break_early(self) -> None:
+        raise RuntimeError("simulated flow failure")
+
+
+try:
+    FailingFlow().kickoff()
+except RuntimeError as error:
+    print(f"Flow raised: {error}")
