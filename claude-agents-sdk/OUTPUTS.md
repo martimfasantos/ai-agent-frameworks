@@ -195,7 +195,7 @@ Result: The Glob tool returned many results (truncated), largely because it pick
 
 === Example 2: can_use_tool Callback ===
 
-Result: Here are the contents of `settings.py`:
+Result: `settings.py` — 15 lines, one setting:
 
 ```python
 import pydantic
@@ -211,9 +211,23 @@ settings: Settings = Settings()
 ```
 
 Audit log (0 calls): []
+
+=== Example 3: can_use_tool Shadowed by allowed_tools ===
+Result: **14 lines** (15 with the trailing newline — `wc -l` reports 14).
+
+[CanUseToolShadowedWarning] can_use_tool will not be invoked for: Read. An
+allowed_tools entry that allows a whole tool auto-approves it before the
+callback is consulted. To gate every tool call, use a PreToolUse hook; or
+narrow the entry so calls fall through to can_use_tool. Allow rules from
+settings files can also shadow the callback but are not visible here.
+
+Callback invocations during this run: 0
+Use a PreToolUse hook to gate tools that allowed_tools already approves.
 ```
 
-**Verdict:** PASS - Example 1 uses allowed_tools/disallowed_tools with permission_mode. Example 2 demonstrates can_use_tool callback with AsyncIterable streaming prompt (required by the SDK for this feature).
+**Verdict:** PASS - Example 1 uses allowed_tools/disallowed_tools with permission_mode. Example 2 demonstrates can_use_tool callback with AsyncIterable streaming prompt (required by the SDK for this feature). Example 3 shows the shadowing footgun: `allowed_tools=["Read"]` auto-approves before the callback runs, so it is never invoked, and since 0.2.111 the SDK raises `CanUseToolShadowedWarning` to say so.
+
+> The `0 calls` audit log in Example 2 is expected here, not a failure — allow rules in the machine's own Claude Code settings can auto-approve `Read` before the callback is consulted, which is exactly the condition Example 3 makes explicit.
 
 ---
 
@@ -429,21 +443,38 @@ Usage: {'input_tokens': 3, 'cache_creation_input_tokens': 905, 'cache_read_input
 'service_tier': 'standard', ...}
 
 === Example 2: Limit Max Turns ===
-Stopped after 3 turns
-Stop reason: end_turn
-Result: Here's a summary of all the Python files found in the project...
+Stopped after 4 turns
+Stop reason: tool_use
+Result: None
+Turn limit hit: Claude Code returned an error result: Reached maximum number of turns (3)
 
 === Example 3: Budget Cap ===
-Result: Paris is the capital of France.
-Cost: $0.006112
+Result: Paris.
+Cost: $0.020575
 Budget limit: $0.05
 
 === Example 4: Effort Level ===
 [Low effort] Result: 4
-Duration: 2043ms
+Duration: 2280ms
+
+=== Example 5: Per-Model Usage ===
+Model: claude-opus-5 (firstParty)
+  Input tokens:          6
+  Output tokens:         311
+  Cache read tokens:     56171
+  Cache creation tokens: 49109
+  Cost:                  $0.439857
+  Context window:        1000000
+
+Cache creation tokens in usage (main loop only): 25876
+Cache creation tokens in model_usage (whole tree): 49109
 ```
 
-**Verdict:** PASS - All four controls demonstrated: cost/usage tracking with total_cost_usd and usage dict, max_turns=3 limiting agent rounds, max_budget_usd=0.05 capping spend, and effort="low" for fast simple answers.
+**Verdict:** PASS - All five controls demonstrated: cost/usage tracking with total_cost_usd and usage dict, max_turns=3 limiting agent rounds, max_budget_usd=0.05 capping spend, effort="low" for fast simple answers, and per-model accounting via model_usage.
+
+> Example 5 is the point of the `ModelUsage` addition: `usage` counts only the main loop (25,876 cache-creation tokens) while `model_usage` aggregates the whole agent tree including the subagent (49,109). Anything measuring spend from `usage` alone undercounts subagent runs.
+>
+> Examples 2 and 3 exceed their limits by design; the SDK signals both by raising on the error result, which the example now catches and prints. Whether the budget cap in Example 3 fires depends on how expensive the configured model is.
 
 ---
 
@@ -692,23 +723,61 @@ Sandboxing prevents data exfiltration and limits blast radius
 
 ---
 
+## 21_interrupt_and_terminal_reason.py
+
+```
+$ uv run python 21_interrupt_and_terminal_reason.py
+
+=== Example 1: Interrupt a Running Turn ===
+  [interrupt() sent while the model was streaming]
+  subtype:         error_during_execution
+  terminal_reason: aborted_streaming
+  is_error:        True
+  result:          None
+  extra deltas after interrupt: 0
+
+  Sending a follow-up turn on the same client...
+  terminal_reason: completed
+  result:          4
+
+=== Example 2: terminal_reason=max_turns ===
+  subtype:         error_max_turns
+  terminal_reason: max_turns
+  stop_reason:     tool_use
+  turns used:      2
+
+=== terminal_reason values ===
+completed:         the turn finished on its own
+max_turns:         max_turns was reached
+api_error:         the upstream API call failed
+aborted_streaming: interrupted while the model was generating text
+aborted_tools:     interrupted while a tool call was in flight
+None:              older CLI, or a result that bypassed the query loop
+```
+
+**Verdict:** PASS - `interrupt()` cancels the turn mid-stream and `terminal_reason` (0.2.126) reports why it ended: `aborted_streaming` for the cancelled turn, `completed` for the follow-up, `max_turns` when the limit is hit.
+
+> `extra deltas after interrupt: 0` is the proof the cancellation took effect immediately — no further text arrived after the call. The aborted turn still emits its own `ResultMessage`, so the example keeps iterating `receive_response()` to drain it; skipping that drain makes the next `query()` read the dead turn's buffered messages. Note `ClaudeSDKClient` yields error results as `ResultMessage`, whereas `query()` raises on them — which is why the client is used here.
+
+---
+
 ## Summary
 
 | # | File | Status | Notes |
 |---|------|--------|-------|
 | 0 | `00_hello_world.py` | PASS | Basic query with ResultMessage |
-| 1 | `01_basic_tools.py` | PASS | Tool definitions and invocations |
-| 2 | `02_system_prompt.py` | PASS | System prompt configuration |
-| 3 | `03_model_selection.py` | PASS | Haiku/Sonnet/Opus model switching |
-| 4 | `04_structured_output.py` | PASS | JSON schema output validation |
-| 5 | `05_conversations.py` | PASS | Multi-turn conversation state |
-| 6 | `06_custom_tools.py` | PASS | Custom tool registration and dispatch |
+| 1 | `01_built_in_tools.py` | PASS | Built-in tool definitions and invocations |
+| 2 | `02_custom_tools.py` | PASS | Custom tool registration and dispatch |
+| 3 | `03_structured_outputs.py` | PASS | JSON schema output validation |
+| 4 | `04_system_prompts.py` | PASS | System prompt configuration and presets |
+| 5 | `05_permissions.py` | PASS | Permission modes, allow/deny lists, can_use_tool |
+| 6 | `06_hooks.py` | PASS | PreToolUse/PostToolUse hook callbacks |
 | 7 | `07_sessions.py` | PASS | Session create, resume, fork |
 | 8 | `08_multi_turn.py` | PASS | Context retention across 3 turns |
 | 9 | `09_subagents.py` | PASS | Two subagents delegated via Agent tool |
 | 10 | `10_mcp_servers.py` | PASS | External MCP server integration |
 | 11 | `11_streaming.py` | PASS | Real-time token streaming |
-| 12 | `12_cost_tracking.py` | PASS | Cost, turns, duration, budget, effort |
+| 12 | `12_cost_tracking.py` | PASS | Cost, turns, duration, budget, effort, model_usage |
 | 13 | `13_file_checkpointing.py` | PASS | File checkpoint and rewind |
 | 14 | `14_session_store.py` | PASS | InMemorySessionStore transcript |
 | 15 | `15_deferred_tool_use.py` | PASS | Human-in-the-loop deferral |
@@ -717,5 +786,6 @@ Sandboxing prevents data exfiltration and limits blast radius
 | 18 | `18_thinking_config.py` | PASS | Extended thinking modes |
 | 19 | `19_task_budget.py` | PASS | Dollar cap and token budget |
 | 20 | `20_sandbox_settings.py` | PASS | Sandboxed bash with network domain controls |
+| 21 | `21_interrupt_and_terminal_reason.py` | PASS | interrupt() cancellation and terminal_reason |
 
-**21/21 examples pass.**
+**22/22 examples pass.**

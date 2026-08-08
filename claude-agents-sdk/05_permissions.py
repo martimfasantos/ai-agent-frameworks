@@ -1,4 +1,5 @@
 import asyncio
+import warnings
 from collections.abc import AsyncIterable
 from typing import Any
 
@@ -15,6 +16,7 @@ from claude_agent_sdk import (
     PermissionResult,
     PermissionResultAllow,
     PermissionResultDeny,
+    CanUseToolShadowedWarning,
 )
 
 from settings import settings
@@ -27,6 +29,7 @@ In this example, we explore Claude Agent SDK with the following features:
 - Permission modes: default, acceptEdits, plan, bypassPermissions
 - allowed_tools and disallowed_tools for fine-grained control
 - can_use_tool callback for programmatic permission decisions
+- CanUseToolShadowedWarning when allowed_tools silently bypasses the callback
 
 Permission modes control how broadly tools are auto-approved. The
 allowed_tools list acts as a per-tool allowlist, while disallowed_tools
@@ -124,3 +127,39 @@ async def example_can_use_tool():
 
 
 asyncio.run(example_can_use_tool())
+
+# --------------------------------------------------------------
+# Example 3: can_use_tool Shadowed by allowed_tools
+# --------------------------------------------------------------
+print("\n=== Example 3: can_use_tool Shadowed by allowed_tools ===")
+
+
+async def example_shadowed_callback():
+    # A whole-tool allowed_tools entry auto-approves before the callback runs,
+    # so the callback never sees the call. Since 0.2.111 the SDK warns about it.
+    options = ClaudeAgentOptions(
+        can_use_tool=permission_callback,
+        allowed_tools=["Read"],
+    )
+
+    calls_before = len(tool_audit_log)
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+
+        async for message in query(
+            prompt=streaming_prompt("Read settings.py and say how many lines it has."),
+            options=options,
+        ):
+            if isinstance(message, ResultMessage) and message.subtype == "success":
+                print(f"Result: {message.result}")
+
+    for warning in caught:
+        if issubclass(warning.category, CanUseToolShadowedWarning):
+            print(f"\n[{warning.category.__name__}] {warning.message}")
+
+    print(f"\nCallback invocations during this run: {len(tool_audit_log) - calls_before}")
+    print("Use a PreToolUse hook to gate tools that allowed_tools already approves.")
+
+
+asyncio.run(example_shadowed_callback())

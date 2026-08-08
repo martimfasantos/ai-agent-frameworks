@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/anthropics/claude-agent-sdk-python
 - Documentation: https://platform.claude.com/docs/en/agent-sdk/overview
-- Version: **0.2.106**
+- Version: **0.2.130**
 
 ## About Claude Agent SDK
 
@@ -24,7 +24,8 @@ Key features:
 - **Deferred tool use** - Human-in-the-loop approval via hook deferral
 - **Hook event streaming** - Observe hook lifecycle via HookEventMessage
 - **Strict MCP config** - Lock down MCP sources for deterministic tool sets
-- **Cost tracking** - Budget caps, turn limits, effort levels
+- **Cost tracking** - Budget caps, turn limits, effort levels, per-model usage
+- **Interruption** - Cancel a running turn and read why it ended via `terminal_reason`
 
 ## Setup
 
@@ -70,6 +71,10 @@ uv run python 14_session_store.py
 uv run python 15_deferred_tool_use.py
 uv run python 16_hook_events.py
 uv run python 17_strict_mcp.py
+uv run python 18_thinking_config.py
+uv run python 19_task_budget.py
+uv run python 20_sandbox_settings.py
+uv run python 21_interrupt_and_terminal_reason.py
 ```
 
 ## Examples
@@ -81,14 +86,14 @@ uv run python 17_strict_mcp.py
 | 02 | `02_custom_tools.py` | @tool decorator, create_sdk_mcp_server, in-process MCP |
 | 03 | `03_structured_outputs.py` | JSON Schema output, Pydantic model schema |
 | 04 | `04_system_prompts.py` | Custom string, preset, preset with append |
-| 05 | `05_permissions.py` | Permission modes, allow/deny lists, can_use_tool callback |
+| 05 | `05_permissions.py` | Permission modes, allow/deny lists, can_use_tool callback, CanUseToolShadowedWarning |
 | 06 | `06_hooks.py` | PreToolUse/PostToolUse hooks, matchers, deny decisions |
 | 07 | `07_sessions.py` | Session resume, fork, session ID capture |
 | 08 | `08_multi_turn.py` | ClaudeSDKClient, multi-turn conversations |
 | 09 | `09_subagents.py` | AgentDefinition, agent delegation, model selection |
 | 10 | `10_mcp_servers.py` | External MCP server (stdio), filesystem tools |
 | 11 | `11_streaming.py` | Real-time StreamEvent, partial messages |
-| 12 | `12_cost_tracking.py` | Cost tracking, max_turns, max_budget_usd, effort |
+| 12 | `12_cost_tracking.py` | Cost tracking, max_turns, max_budget_usd, effort, model_usage |
 | 13 | `13_file_checkpointing.py` | File checkpointing, rewind_files |
 | 14 | `14_session_store.py` | InMemorySessionStore, eager flush, store inspection |
 | 15 | `15_deferred_tool_use.py` | HITL deferred tool use, hook "defer" decision |
@@ -97,8 +102,9 @@ uv run python 17_strict_mcp.py
 | 18 | `18_thinking_config.py` | Extended thinking: enabled, adaptive, and disabled modes |
 | 19 | `19_task_budget.py` | Dollar cap (max_budget_usd) and TaskBudget token budget for agent spend |
 | 20 | `20_sandbox_settings.py` | SandboxSettings for sandboxed bash with network domain controls |
+| 21 | `21_interrupt_and_terminal_reason.py` | interrupt() to cancel a turn, ResultMessage.terminal_reason, draining after an interrupt |
 
 ## Key dependencies
 
-- `claude-agent-sdk>=0.2.106` - Claude Agent SDK (Python)
+- `claude-agent-sdk>=0.2.106` - Claude Agent SDK (Python), locked at 0.2.130
 - `pydantic-settings` - Settings management from .env
