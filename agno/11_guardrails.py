@@ -3,7 +3,7 @@ from typing import Union
 from dotenv import load_dotenv
 
 from agno.agent import Agent
-from agno.agent._hooks import InputCheckError
+from agno.exceptions import InputCheckError
 from agno.guardrails import BaseGuardrail
 from agno.models.openai import OpenAIChat
 from agno.run.agent import RunInput

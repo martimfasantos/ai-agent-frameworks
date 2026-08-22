@@ -1,12 +1,12 @@
 # Agno Example Outputs
 
-Captured outputs from running all 17 examples against agno v2.6.18 with `gpt-4o-mini`.
+Captured outputs from running all 20 examples against agno v2.8.7 with `gpt-4o-mini`.
 
 > These outputs may vary between runs due to LLM non-determinism. The structure and tool invocations should remain consistent.
 
 ---
 
-## 00_basic_agent.py
+## 00_hello_world.py
 
 ```
 ╭──────────────────────────────────────────────────────────────────────────────╮
@@ -306,13 +306,15 @@ INFO Found 4 documents
 === Test 2: Blocked request (disallowed keyword) ===
 
 ERROR    Validation failed: Request blocked: contains disallowed keyword 'hack'.
+         | Check trigger: CheckTrigger.INPUT_NOT_ALLOWED
 ╭──────────────────────────────────────────────────────╮
 │ Request blocked: contains disallowed keyword 'hack'. │
 ╰──────────────────────────────────────────────────────╯
 
 === Test 3: Blocked request (too long) ===
 
-ERROR    Validation failed: Request blocked: input too long (1200 chars, max 500).
+ERROR    Validation failed: Request blocked: input too long (1200 chars, max
+         500). | Check trigger: CheckTrigger.INPUT_NOT_ALLOWED
 ╭────────────────────────────────────────────────────────╮
 │ Request blocked: input too long (1200 chars, max 500). │
 ╰────────────────────────────────────────────────────────╯
@@ -446,13 +448,13 @@ Secure MCP Filesystem Server running on stdio
 ```
 === Example 1: Safe operation (list files) ===
 
-╭─────────────────────────────────────╮
-│ ### Files in the current directory: │
-│ - `report.pdf`                      │
-│ - `notes.txt`                       │
-│ - `budget.xlsx`                     │
-│ - `photo.jpg`                       │
-╰─────────────────────────────────────╯
+╭─────────────────────────────────╮
+│ ### Files in Current Directory: │
+│ - `report.pdf`                  │
+│ - `notes.txt`                   │
+│ - `budget.xlsx`                 │
+│ - `photo.jpg`                   │
+╰─────────────────────────────────╯
 
 === Example 2: Destructive operation (delete file — needs approval) ===
 
@@ -472,3 +474,113 @@ Pending approvals: 1
 ```
 
 > The @approval decorator gates the delete_file tool behind human approval while list_files executes freely.
+
+---
+
+## 17_checkpointing.py
+
+```
+=== Step 1: Run crashes mid-flight ===
+
+   [tool] list_invoices('Iberia') — expensive call #1
+   [tool] fetch_invoice_total('INV-101') — expensive call #1
+
+💥 Process died: worker process killed while fetching invoice totals
+
+=== Step 2: What the checkpoint saved ===
+
+Run id:      116797cf-ad08-4d51-9f36-b6feda0639af
+Run status:  RUNNING  (never reached a terminal state)
+Tool results already persisted:
+  - list_invoices: Invoices for Iberia: INV-101, INV-102
+
+=== Step 3: Resume the crashed run ===
+
+   [tool] fetch_invoice_total('INV-101') — expensive call #2
+   [tool] fetch_invoice_total('INV-102') — expensive call #3
+╭────────────────────────────────────────────────────╮
+│ The combined invoice total for Iberia is 2400 EUR. │
+╰────────────────────────────────────────────────────╯
+
+Run status: RunStatus.completed
+list_invoices calls (whole example): 1
+  -> the resume replayed the checkpointed result instead of calling it again
+
+=== Step 4: Fork the session to explore a branch ===
+
+Forked 'invoice-audit-session-001' -> '97f80717-d1ed-4b91-87c6-2d50cf74dd7a'
+
+╭────────────────────────────────────────────────────╮
+│ The average invoice amount for Iberia is 1200 EUR. │
+╰────────────────────────────────────────────────────╯
+
+Runs in original session: 1 (untouched)
+Runs in forked session:   2 (inherited history + the branch)
+fetch_invoice_total calls: 3 before the fork, 3 after the branch
+  -> the branch answered from the forked history, no tool re-run
+```
+
+> The call counters are the proof: `list_invoices` ran once in the whole example, so the resumed run read its result from the `tool-batch` checkpoint rather than paying for it twice. Unlike `07_human_in_the_loop.py` and `16_approval_decorator.py`, nothing asked for permission here — the run was destroyed mid-flight and recovered in place under its original `run_id`.
+
+---
+
+## 18_filesystem.py
+
+```
+=== Session 1 (user: alice) — record a durable fact ===
+
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ I've recorded that you're benchmarking vector databases for a RAG pipeline   │
+│ and have chosen LanceDb for its embedded serverless operation.               │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+=== Session 2 (user: alice, new session) — recall from the file store ===
+
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ You settled on LanceDb as the vector database because it runs embedded with  │
+│ no server.                                                                   │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+=== Session 3 (user: bob) — namespace isolation ===
+
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ I have no note on which vector database was selected or the reasoning behind │
+│ it.                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+=== The store, seen from outside the agent ===
+
+namespace 'notes/alice': 1 file(s), 110 bytes
+  - notes/project.md (110 bytes, version 1)
+namespace 'notes/bob': 0 file(s), 0 bytes
+
+Contents of alice's notes/project.md:
+Benchmarking vector databases for a RAG pipeline. Settled on LanceDb because it runs embedded with no server.
+```
+
+> Session 2 uses a different `session_id` with no conversation history, so the recalled answer can only have come from the file store — that is what makes `FileSystem` different from the transcripts in `10_storage.py` and the ephemeral dict in `13_session_state.py`. Session 3 is the same agent and the same SQLite file, but `notes/{user_id}` resolves to an empty namespace for `bob`.
+
+---
+
+## 19_eval_suite.py
+
+```
+=== Running eval suite ===
+
+[PASS] converts 100 EUR correctly
+  tags:         currency
+  tools called: ['get_exchange_rate']
+  score:        1.0 (passed=True)
+  output:       {"currency":"EUR","usd_amount":109.0}
+  duration:     2.26s
+[PASS] looks the rate up instead of guessing
+  tags:         currency, reliability
+  tools called: ['get_exchange_rate']
+  score:        1.0 (passed=True)
+  output:       {"currency":"GBP","usd_amount":63.5}
+  duration:     2.16s
+
+Suite: PASS — 2/2 cases passed
+```
+
+> Both scorers are deterministic: `CodeScorer` compares the typed `usd_amount` field against `expected=109.0`, and `ToolCallScorer` asserts that `get_exchange_rate` really executed with `currency="GBP"`. No judge model runs, so the suite costs only the two agent runs.
