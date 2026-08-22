@@ -1,9 +1,11 @@
 import asyncio
 import os
+from collections import Counter
 
-from langchain.agents import create_agent
+from langchain.agents import AgentState, create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
+from langgraph.graph import END, START, StateGraph
 
 from settings import settings
 
@@ -13,16 +15,19 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 -------------------------------------------------------
 In this example, we explore LangChain with the following features:
 - v3 event streaming via astream_events(version="v3")
-- Granular event types: tool-started, tool-finished, content-block-delta
-- Real-time observation of agent execution steps
+- Typed projections: stream.messages, message.text, message.tool_calls, stream.output
+- stream.subgraphs to observe a nested graph run from the parent stream
+- Raw protocol-event iteration as the escape hatch
 
-The v3 event streaming API (new in langchain 1.3.0) provides
-structured events for every step of agent execution — model
-tokens, tool calls, and chain lifecycle. This enables building
-real-time UIs that show tool usage and streaming responses.
+The v3 streaming protocol exposes typed projections over one run, so you pick
+the view you need instead of branching on stream_mode chunks: message.text
+yields tokens, message.tool_calls yields tool-call argument chunks, and
+stream.output awaits the final state. Iterating the stream object directly still
+gives you the raw method/params envelopes when a projection does not cover
+your case. A projection can only be consumed once per run.
 
 For more details, visit:
-https://python.langchain.com/docs/how_to/streaming/
+https://docs.langchain.com/oss/python/langchain/streaming
 -------------------------------------------------------
 """
 
@@ -51,61 +56,100 @@ agent = create_agent(
     system_prompt="You are a helpful assistant. Be concise, reply in 1-2 sentences.",
 )
 
+# --- 3. Wrap the agent in a parent graph so it runs as a subgraph ---
+parent_graph = (
+    StateGraph(AgentState)
+    .add_node("city_agent", agent)
+    .add_edge(START, "city_agent")
+    .add_edge("city_agent", END)
+    .compile()
+)
 
-# --- 3. Stream events with version="v3" ---
-async def main() -> None:
-    print("=== v3 Event Streaming ===")
-    print()
+QUESTION = "What's the weather and population of Lisbon?"
 
-    events_seen: list[str] = []
 
-    async for event in await agent.astream_events(
-        {"messages": [{"role": "user", "content": "What's the weather and population of Lisbon?"}]},
+# --------------------------------------------------------------
+# Example 1: typed projections (the recommended path)
+# --------------------------------------------------------------
+async def typed_projections() -> None:
+    print("=== Example 1: typed projections ===")
+
+    stream = await agent.astream_events(
+        {"messages": [{"role": "user", "content": QUESTION}]},
         version="v3",
-    ):
-        method = event.get("method", "")
-        data = event.get("params", {}).get("data", {})
+    )
 
-        # Tool events
-        if method == "tools":
-            inner_event = data.get("event", "")
-            if inner_event == "tool-started":
-                tool_name = data.get("tool_name", "")
-                tool_input = data.get("input", {})
-                print(f"[Tool Start] {tool_name}({tool_input})")
-                events_seen.append(f"tool-started:{tool_name}")
-            elif inner_event == "tool-finished":
-                tool_name = data.get("tool_call_id", "")
-                output = data.get("output", "")
-                content = getattr(output, "content", str(output))
-                # Get tool name from the output message
-                name = getattr(output, "name", tool_name)
-                print(f"[Tool End]   {name} -> {content}")
-                events_seen.append(f"tool-finished:{name}")
+    # --- 4. stream.messages yields one handle per model message ---
+    async for message in stream.messages:
+        print(f"  [{message.node}] ", end="", flush=True)
 
-        # Message streaming events
-        elif method == "messages" and isinstance(data, tuple) and len(data) >= 1:
-            msg_data = data[0]
-            if isinstance(msg_data, dict):
-                inner_event = msg_data.get("event", "")
-                if inner_event == "content-block-delta":
-                    delta = msg_data.get("delta", {})
-                    # Text content streaming (type="text-delta")
-                    if delta.get("type") == "text-delta":
-                        text = delta.get("text", "")
-                        print(text, end="", flush=True)
-                elif inner_event == "message-start":
-                    events_seen.append("message-start")
-                elif inner_event == "message-finish":
-                    events_seen.append("message-finish")
+        # message.text streams the answer token by token
+        async for token in message.text:
+            print(token, end="", flush=True)
 
-    print()  # newline after streaming
+        # message.tool_calls streams tool-call argument chunks as they arrive
+        chunks = [chunk async for chunk in message.tool_calls]
+        tool_calls = message.output_message.tool_calls
+        if tool_calls:
+            print(f"{len(chunks)} tool-call argument chunks streamed:")
+            for call in tool_calls:
+                print(f"    -> {call['name']}({call['args']})")
+        else:
+            print()
+
+    # --- 5. stream.output awaits the final state once the run is done ---
+    final_state = await stream.output()
+    for message in final_state["messages"]:
+        if message.type == "tool":
+            print(f"  tool result {message.name} -> {message.content}")
+    print(f"  final answer: {final_state['messages'][-1].text}\n")
+
+
+# --------------------------------------------------------------
+# Example 2: stream.subgraphs for nested runs
+# --------------------------------------------------------------
+async def subgraph_projection() -> None:
+    print("=== Example 2: stream.subgraphs ===")
+
+    stream = await parent_graph.astream_events(
+        {"messages": [{"role": "user", "content": "What's the weather in Tokyo?"}]},
+        version="v3",
+    )
+
+    # --- 6. Each subgraph handle carries its own projections ---
+    async for subgraph in stream.subgraphs:
+        print(f"  subgraph '{subgraph.graph_name}' status={subgraph.status}")
+        async for message in subgraph.messages:
+            text = "".join([token async for token in message.text])
+            if text:
+                print(f"    [{subgraph.graph_name}] {text}")
     print()
 
-    # --- 4. Summary of events captured ---
-    print("=== Events Captured ===")
-    for e in events_seen:
-        print(f"  {e}")
+
+# --------------------------------------------------------------
+# Example 3: raw protocol events (the escape hatch)
+# --------------------------------------------------------------
+async def raw_events() -> None:
+    print("=== Example 3: raw protocol events (escape hatch) ===")
+
+    stream = await agent.astream_events(
+        {"messages": [{"role": "user", "content": QUESTION}]},
+        version="v3",
+    )
+
+    # --- 7. Iterating the stream itself yields the method/params envelopes ---
+    methods: Counter[str] = Counter()
+    async for event in stream:
+        methods[event["method"]] += 1
+
+    for method, count in sorted(methods.items()):
+        print(f"  {method:<12} {count} events")
+
+
+async def main() -> None:
+    await typed_projections()
+    await subgraph_projection()
+    await raw_events()
 
 
 if __name__ == "__main__":

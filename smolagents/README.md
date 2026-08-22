@@ -19,7 +19,9 @@ Key features:
 - **Planning** - Automatic plan generation with `planning_interval`
 - **Memory** - Inspect `agent.memory.steps` for full execution history
 - **MCP tools** - Model Context Protocol integration via `ToolCollection.from_mcp()`
-- **Callbacks** - Step callbacks and final answer validation checks
+- **Callbacks** - Step callbacks (list or per-step-type dict) and final answer validation checks
+- **Human-in-the-loop** - `agent.interrupt()` mid-run, edit the plan, resume with `run(reset=False)`
+- **Run results** - `return_full_result=True` returns a `RunResult` with token usage and timing
 
 ## Setup
 
@@ -62,6 +64,8 @@ uv run python 10_text_to_sql.py
 uv run python 11_mcp_tools.py
 uv run python 12_callbacks_observability.py
 uv run python 13_advanced_patterns.py
+uv run python 15_plan_customization_hitl.py
+uv run python 16_run_result_and_replay.py
 ```
 
 ## Examples
@@ -83,6 +87,8 @@ uv run python 13_advanced_patterns.py
 | 12 | `12_callbacks_observability.py` | Post-run execution trace with step/tool/error counts |
 | 13 | `13_advanced_patterns.py` | Custom instructions, `final_answer_checks`, step inspection |
 | 14 | `14_gradio_ui.py` | GradioUI for interactive web chat interface |
+| 15 | `15_plan_customization_hitl.py` | Human-in-the-loop: dict-form `step_callbacks={PlanningStep: ...}`, plan editing, `agent.interrupt()`, `run(reset=False)` resume |
+| 16 | `16_run_result_and_replay.py` | `return_full_result=True` -> `RunResult` (tokens, timing, steps), `dict()`, `agent.replay()`, `agent.visualize()` |
 
 ## Key dependencies
 

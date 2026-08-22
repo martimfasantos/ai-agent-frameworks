@@ -1,7 +1,7 @@
 import os
 
 from langchain.agents import create_agent
-from langchain.agents.middleware import HumanInTheLoopMiddleware
+from langchain.agents.middleware import HumanInTheLoopMiddleware, InterruptOnConfig
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
@@ -68,7 +68,14 @@ agent = create_agent(
         HumanInTheLoopMiddleware(
             interrupt_on={
                 "search_docs": False,  # Auto-approve safe operations
-                "send_email": True,  # Require approval
+                # `when` is a predicate over the tool call: only external
+                # recipients need approval, internal mail is auto-approved
+                "send_email": InterruptOnConfig(
+                    allowed_decisions=["approve", "edit", "reject"],
+                    when=lambda request: not request.tool_call["args"]["to"].endswith(
+                        "@acme.com"
+                    ),
+                ),
                 "delete_account": {  # Only approve or reject (no editing)
                     "allowed_decisions": ["approve", "reject"],
                 },
@@ -111,3 +118,20 @@ if result.interrupts:
     print(f"Final response: {final_result.value['messages'][-1].content}")
 else:
     print(f"No interrupt (auto-approved): {result.value['messages'][-1].content}")
+
+# --- 6. The same tool skips the interrupt when `when` returns False ---
+print("\n=== Requesting email to an internal address (when -> False) ===")
+internal_result = agent.invoke(
+    {
+        "messages": [
+            {
+                "role": "user",
+                "content": "Send an email to bob@acme.com about the shipping policy",
+            }
+        ]
+    },
+    config={"configurable": {"thread_id": "hitl-internal"}},
+    version="v2",
+)
+print(f"Interrupts raised: {len(internal_result.interrupts)}")
+print(f"Final response: {internal_result.value['messages'][-1].content}")

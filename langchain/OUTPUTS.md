@@ -1,6 +1,7 @@
 # LangChain Examples — Output Log
 
-All 20 examples executed successfully with `gpt-4o-mini` on 2026-05-10.
+All 24 examples executed successfully with `gpt-4o-mini` on 2026-05-10.
+Examples 10 and 20-23 were re-verified on 2026-08-05 against `langchain` 1.3.14.
 
 > Outputs are non-deterministic — your results will vary slightly on each run.
 
@@ -182,12 +183,19 @@ Response: I cannot process requests containing inappropriate content. Please rep
 === Requesting email send (will interrupt) ===
 Interrupt received!
   Action requests: [{'name': 'send_email', 'args': {'to': 'alice@example.com',
-    'subject': 'Refund Policy Information', 'body': 'Dear Alice, ...'}, ...}]
+    'subject': 'Refund Policy Inquiry', 'body': 'Dear Alice, ...'}, ...}]
 
 === Approving the action ===
-Final response: The email regarding the refund policy has been successfully sent to
-alice@example.com. If you need any further assistance, feel free to ask!
+Final response: I have sent an email to alice@example.com regarding the refund policy.
+If you need any further assistance, let me know!
+
+=== Requesting email to an internal address (when -> False) ===
+Interrupts raised: 0
+Final response: The email has been successfully sent to Bob at bob@acme.com regarding
+the shipping policy. If you need any further assistance, feel free to ask!
 ```
+
+> The `when` predicate on `InterruptOnConfig` is evaluated per tool call: `alice@example.com` is external so it interrupts, while `bob@acme.com` is auto-approved and never raises an interrupt.
 
 ---
 
@@ -375,23 +383,115 @@ Response: The weather in Lisbon is sunny, 25°C. A 20% tip on an $85 bill is $17
 ## 20_stream_events_v3.py
 
 ```
-=== v3 Event Streaming ===
+=== Example 1: typed projections ===
+  [model] 10 tool-call argument chunks streamed:
+    -> get_weather({'city': 'Lisbon'})
+    -> get_population({'city': 'Lisbon'})
+  [model] The weather in Lisbon is sunny with a temperature of 26°C, and the population is approximately 550,000.
+  tool result get_weather -> Sunny, 26°C
+  tool result get_population -> 550,000
+  final answer: The weather in Lisbon is sunny with a temperature of 26°C, and the population is approximately 550,000.
 
-[Tool Start] get_weather({'city': 'Lisbon'})
-[Tool End]   get_weather -> Sunny, 26°C
-[Tool Start] get_population({'city': 'Lisbon'})
-[Tool End]   get_population -> 550,000
-The weather in Lisbon is sunny with a temperature of 26°C, and the population is approximately 550,000.
+=== Example 2: stream.subgraphs ===
+  subgraph 'city_agent' status=started
+    [city_agent] The weather in Tokyo is rainy with a temperature of 20°C.
 
-=== Events Captured ===
-  message-start
-  message-finish
-  tool-started:get_weather
-  tool-finished:get_weather
-  tool-started:get_population
-  tool-finished:get_population
-  message-start
-  message-finish
+=== Example 3: raw protocol events (escape hatch) ===
+  messages     44 events
+  tools        4 events
+  values       4 events
 ```
 
-> Demonstrates v3 event streaming — granular tool lifecycle events and token-by-token text streaming for real-time UIs.
+> The typed projections are the recommended path: `message.text` streamed the answer token by token, `message.tool_calls` produced 10 argument chunks that assembled into two tool calls, and `await stream.output()` returned the final state. Example 3 shows the same run consumed as raw `method`/`params` envelopes — the escape hatch when no projection fits. A projection can only be consumed once per run.
+
+---
+
+## 21_tool_error_handling.py
+
+```
+=== Example 1: [ToolErrorMiddleware, ToolRetryMiddleware] (correct) ===
+  request flows error -> retry -> tool, so the exception reaches retry first
+  [ToolErrorMiddleware] fetch_exchange_rate({'currency': 'EUR'}) raised ConnectionError
+  tool attempts actually made : 4
+  ToolMessage status          : ['error']
+  final answer                : I couldn't fetch the USD exchange rate for EUR at the moment; please try again later.
+
+=== Example 2: [ToolRetryMiddleware, ToolErrorMiddleware] (reversed) ===
+  retry is now outermost, so the inner error middleware swallows the
+  exception first and retry sees a successful call
+  [ToolErrorMiddleware] fetch_exchange_rate({'currency': 'EUR'}) raised ConnectionError
+  tool attempts actually made : 1
+  ToolMessage status          : ['error']
+  final answer                : I couldn't fetch the USD exchange rate for EUR at the moment; please try again later.
+
+=== Why the order matters ===
+  Middleware is composed first-is-outermost.
+  ToolErrorMiddleware must wrap ToolRetryMiddleware, otherwise retries are
+  silently skipped: 1 attempt instead of 4 (initial call + max_retries=3).
+```
+
+> The attempt counter is the proof: with `ToolErrorMiddleware` outermost the tool is really called 4 times (1 + `max_retries=3`) before the exception becomes a `ToolMessage(status="error")`. Reversed, the inner error middleware converts the very first exception, so the retry middleware never sees a failure and only 1 attempt happens. Both runs produce the same final answer, which is exactly why the misordering is easy to ship unnoticed.
+
+---
+
+## 22_builtin_middleware.py
+
+```
+=== Example 1: SummarizationMiddleware (TriggerClause AND-semantics) ===
+  turn: I am planning a trip to Lisbon in May.       ->  2 messages, ~ 40 tokens
+  turn: I want to see the Belem tower and ride tram  ->  4 messages, ~ 79 tokens
+  turn: My budget is 1200 euros for five nights.     ->  6 messages, ~130 tokens
+  turn: I am travelling with my brother, who is vege ->  8 messages, ~184 tokens
+  turn: What do you remember about my trip?          ->  4 messages, ~324 tokens <- both thresholds crossed, history summarized
+
+  history is now a summary plus the 2 most recent messages:
+    Here is a summary of the conversation to date:
+
+## SESSION INTENT
+The user is planning a trip to Lisbon in May and seeks recommendations and information regarding attractions, budget, and dietary cons...
+  last answer: You're planning a trip to Lisbon in May, with a budget of 1200 euros for five nights, and you're interested in attractions like the Belém Tower and Tram 28, while also needing vegetarian dining options for your brother.
+
+=== Example 2: ContextEditingMiddleware (ClearToolUsesEdit) ===
+  [model call] 0 tool results in request, 0 cleared, ~16 tokens
+  [model call] 3 tool results in request, 2 cleared, ~273 tokens
+  agent state still holds every original tool result:
+    get_city_report  -> Tourism report for Lisbon. Peak season runs from June to...
+    get_city_report  -> Tourism report for London. Peak season runs from June to...
+    get_city_report  -> Tourism report for Tokyo. Peak season runs from June to ...
+  final answer: I currently have the tourism report for Tokyo, which highlights that May is a shoulder month with mild weather, good walkability, and well-covered public transport, while I need to retrieve the reports for Lisbon and London.
+
+=== Example 3: ModelCallLimitMiddleware + ToolCallLimitMiddleware ===
+  model calls made      : 3 (run_limit=3, then exit_behavior='end')
+  fetch_page executions : 2 (run_limit=2)
+  blocked tool calls    : 2 -> Tool call limit exceeded. Do not call 'fetch_page' again.
+  final answer          : Model call limits exceeded: run limit (3/3)
+```
+
+> Example 1: a single `TriggerClause` is AND — the message count reached 8 on turn 4 but nothing happened until the token count also passed 180 on turn 5, when 8 messages collapsed into a summary plus the 2 kept messages. Example 2: context edits are applied to the model *request*, so the model saw 2 of 3 tool results replaced by the placeholder while agent state kept the originals — and the final answer shows the real consequence of that trade. Example 3: `fetch_page` was blocked after 2 executions, and the run was then ended by `ModelCallLimitMiddleware` at 3 model calls rather than looping forever.
+
+---
+
+## 23_structured_output_strategies.py
+
+```
+=== Example 1: ToolStrategy with a union schema ===
+  Q: What is the weather in Lisbon?
+    schema chosen: WeatherReport
+    fields       : {'city': 'Lisbon', 'conditions': 'sunny', 'temperature_c': 26.0}
+  Q: Who won the 1998 World Cup?
+    schema chosen: OutOfScope
+    fields       : {'reason': 'The question is about sports history, not weather.', 'suggestion': 'Please ask about the weather in a specific city.'}
+  tool_message_content in history: 'Structured answer recorded.'
+
+=== Example 2: ToolStrategy retrying on a validation error ===
+  [handle_errors] caught StructuredOutputValidationError, asking the model to retry
+  validation attempts: 2
+  accepted answer    : {'city': 'London, UK', 'temperature_c': 15.0}
+
+=== Example 3: ProviderStrategy(strict=True) ===
+  Lisbon, Portugal
+  landmarks: Belém Tower, Jerónimos Monastery
+  messages in history: 2 (no structured-output tool call)
+```
+
+> The union schema lets the model pick its response shape per question — `WeatherReport` for an answerable one, `OutOfScope` for a refusal — without any branching in application code. `handle_errors` turned the rejected first attempt into a retry instruction and the model corrected `London` to `London, UK`. `ProviderStrategy` needs no synthetic tool call at all, which is why its history is only 2 messages.

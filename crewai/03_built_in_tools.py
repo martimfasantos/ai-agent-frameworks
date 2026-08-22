@@ -6,6 +6,7 @@ from crewai_tools import (
     FileReadTool,
     DirectoryReadTool,
     ScrapeWebsiteTool,
+    WaitTool,
 )
 
 from settings import settings
@@ -17,6 +18,7 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 In this example, we explore CrewAI with the following built-in tools from crewai_tools:
 - Web search and scraping tools
 - File and directory operations
+- WaitTool for pausing between steps (stdlib only, no API key)
 - Integration with external APIs
 
 This example demonstrates the variety of built-in tools available in CrewAI
@@ -39,6 +41,7 @@ multi_tool_agent = Agent(
         FileReadTool(),
         DirectoryReadTool(directory="."),
         ScrapeWebsiteTool(),
+        WaitTool(),
     ),
     llm=settings.OPENAI_MODEL_NAME,
     verbose=True,
