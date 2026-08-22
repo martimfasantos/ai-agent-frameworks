@@ -18,6 +18,10 @@ Execution hooks let you intercept LLM calls and tool calls at
 runtime. This is useful for logging, metrics collection, prompt
 modification, or implementing custom caching strategies.
 
+These four decorators are the legacy dialect; they are kept as adapters over
+the unified interception dispatcher, which also covers the execution and step
+boundaries (see 26_interception_hooks.py).
+
 For more details, visit:
 https://docs.crewai.com/en/learn/execution-hooks
 -------------------------------------------------------
@@ -36,28 +40,28 @@ from crewai.hooks import (
 def log_before_llm(context):
     """Hook that runs before every LLM call."""
     print(f"[HOOK] Before LLM call - Context type: {type(context).__name__}")
-    return context  # Return context (can be modified)
+    return context  # Ignored: edit context.messages in place, or return False to block
 
 
 @after_llm_call
 def log_after_llm(context):
     """Hook that runs after every LLM call."""
     print(f"[HOOK] After LLM call - Response received")
-    return context  # Return context (can be modified)
+    return context  # Ignored: return a str to replace context.response
 
 
 @before_tool_call
 def log_before_tool(context):
     """Hook that runs before every tool call."""
     print(f"[HOOK] Before tool call - Context type: {type(context).__name__}")
-    return context  # Return context (can be modified)
+    return context  # Ignored: edit context.tool_input in place, or return False to block
 
 
 @after_tool_call
 def log_after_tool(context):
     """Hook that runs after every tool call."""
     print(f"[HOOK] After tool call - Context type: {type(context).__name__}")
-    return context  # Return context (can be modified)
+    return context  # Ignored: return a str to replace context.tool_result
 
 
 # --- 2. Define a simple tool ---

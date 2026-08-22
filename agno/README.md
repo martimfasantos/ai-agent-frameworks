@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/agno-agi/agno
 - Documentation: https://docs.agno.com
-- Version: **2.6.18**
+- Version: **2.8.7**
 
 ## Agno Examples
 
@@ -43,7 +43,7 @@ cp .env.example .env
 
 | # | File | Feature | Description |
 |---|------|---------|-------------|
-| 00 | `00_basic_agent.py` | Agents | Basic agent with instructions and formatted output |
+| 00 | `00_hello_world.py` | Agents | Basic agent with instructions and formatted output |
 | 01 | `01_agent_with_tools.py` | Tools | Custom tools with `@tool` decorator |
 | 02 | `02_async_agent.py` | Async | Async agent runs with `arun()` and `asyncio.gather` |
 | 03 | `03_streaming.py` | Streaming | Token-by-token streaming with `RunOutputEvent` |
@@ -60,13 +60,19 @@ cp .env.example .env
 | 14 | `14_mcp_tools.py` | MCP Tools | External tool servers via Model Context Protocol |
 | 15 | `15_hooks.py` | Hooks | Pre-hooks and post-hooks for logging and transforms |
 | 16 | `16_approval_decorator.py` | Approval | `@approval` decorator for tool-level HITL gating |
+| 17 | `17_checkpointing.py` | Checkpointing | Crash recovery with `checkpoint="tool-batch"`, `continue_run()` and `fork_session()` |
+| 18 | `18_filesystem.py` | FileSystem | Durable per-user file store with `agno.fs.FileSystem` and `fs.tools()` |
+| 19 | `19_eval_suite.py` | Evals | `Case` + `run_cases()` graded by `CodeScorer` and `ToolCallScorer` |
 
 ### Running examples
 
 Run any example directly:
 
 ```bash
-python 00_basic_agent.py
+python 00_hello_world.py
+python 17_checkpointing.py
+python 18_filesystem.py
+python 19_eval_suite.py
 ```
 
 > **Note:** Example `14_mcp_tools.py` requires Node.js (npx) installed for the MCP filesystem server.
