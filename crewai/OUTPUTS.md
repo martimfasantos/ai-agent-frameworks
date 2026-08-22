@@ -1,6 +1,6 @@
 # CrewAI - Example Outputs
 
-All examples run with `crewai[tools]>=1.14.7` and `gpt-4o-mini` as the model.
+All examples run with `crewai[tools]>=1.15.11` and `gpt-4o-mini` as the model.
 
 > **Note:** LLM responses are non-deterministic. Your outputs will differ in wording but should follow the same structure and demonstrate the same features.
 
@@ -109,14 +109,14 @@ Tool: read_website_content executed
 
 Agent Final Answer:
   Agent: All-in-One Specialist
-  - Multi-Agent Platform: CrewAI AMP enables enterprises to manage and scale teams of collaborative AI agents
-  - Ease of Use: Visual editor with AI copilot and intuitive APIs
-  - Autonomous Operations: AI agents can perform complex tasks autonomously
-  - Integration Capabilities: Gmail, Microsoft Teams, Notion, HubSpot, Salesforce, Slack
+  - Multi-Agent Platform: CrewAI AMP enables enterprises to build and scale teams of collaborative AI agents
+  - Studio & Templates: Visual builder, prebuilt templates, and intuitive APIs
+  - Optimization Engine: Continuous learning from production runs, multi-LLM testing
+  - Real-time Observability: Tracks every tool call, PII redaction and policy checks
   - Open Source Framework: Offers an open-source orchestration framework
 ```
 
-**Verdict:** PASS - Built-in crewai_tools (ScrapeWebsiteTool) used to scrape and summarize live website content
+**Verdict:** PASS - Built-in crewai_tools (ScrapeWebsiteTool) used to scrape and summarize live website content. `WaitTool` is also registered on the agent; this task never needs to pause, so it stays unused
 
 ---
 
@@ -453,22 +453,27 @@ Crew Execution Completed
 ```
 $ uv run python 15_mcp_integration.py
 
-MCPServerAdapter not available in this version of CrewAI.
+INFO  Processing request of type ListToolsRequest              server.py:733
+Discovered MCP tools: ['get_stock']
 
 Crew Execution Started
 
-Agent Started: MCP-Enabled Assistant
-Task: List 3 interesting facts about the Python programming language.
+Agent Started: MCP-Enabled Warehouse Assistant
+Task: How many units of SKU-77 are in stock?
+
+INFO  Processing request of type CallToolRequest               server.py:733
+Tool get_stock executed with result: SKU-77: 42 units in stock
 
 Agent Final Answer:
-  1. Versatile Use Cases: Python is a multi-paradigm programming language...
-  2. Extensive Libraries and Frameworks: NumPy, Pandas, Django, Flask, TensorFlow...
-  3. Readable and Maintainable Syntax: Python emphasizes readability and simplicity...
+  There are 42 units of SKU-77 in stock.
 
 Crew Execution Completed
+Result: There are 42 units of SKU-77 in stock.
 ```
 
-**Verdict:** PASS - MCP integration demonstrated with DSL syntax; MCPServerAdapter gracefully fell back when unavailable, agent still completed task using available tools
+**Verdict:** PASS - A FastMCP server was started over stdio, `MCPServerAdapter` discovered `get_stock` from it, and the agent called that MCP tool to answer the task
+
+> The MCP server is a small inline script launched as a subprocess, so the example needs no external service. The `INFO Processing request...` lines come from the server itself, proving the calls crossed the MCP boundary.
 
 ---
 
@@ -534,9 +539,13 @@ Agent Final Answer:
 [MONITOR] Crew execution completed
 
 Crew Execution Completed
+
+Flow Execution Started - Name: FailingFlow
+[MONITOR] Flow failed: FailingFlow - simulated flow failure
+Flow raised: simulated flow failure
 ```
 
-**Verdict:** PASS - Custom BaseEventListener ([MONITOR] prefixed logs) fired at crew start, task start/complete, agent start/complete, and crew completion
+**Verdict:** PASS - Custom BaseEventListener ([MONITOR] prefixed logs) fired at crew start, task start/complete, agent start/complete, crew completion, and on `FlowFailedEvent` when the deliberately-failing flow raised
 
 ---
 
@@ -547,22 +556,31 @@ $ uv run python 18_execution_hooks.py
 
 Crew Execution Started
 
-[HOOK] Before LLM call - Context type: LLMCallHookContext
-
 Agent Started: Weather Reporter
 Task: Get the temperature in Lisbon and write a brief weather report.
 
+[HOOK] Before LLM call - Context type: LLMCallHookContext
+[HOOK] Before tool call - Context type: ToolCallHookContext
+[HOOK] After tool call - Context type: ToolCallHookContext
+
+Tool: get_temperature | Args: {'city': 'Lisbon'}
+Tool Completed: 22C sunny
+
+[HOOK] Before LLM call - Context type: LLMCallHookContext
 [HOOK] After LLM call - Response received
 
 Agent Final Answer:
-  [ChatCompletionMessageToolCall(id='call_...', function=Function(
-  arguments='{"city":"Lisbon"}', name='get_temperature'), type='function')]
+  **Weather Report for Lisbon:**
+  Currently, the temperature in Lisbon is 22C with sunny skies...
 
 Task Completed
 Crew Execution Completed
+Result: **Weather Report for Lisbon:**
 ```
 
-**Verdict:** PASS - LLM call hooks (before_llm_call, after_llm_call) fired correctly around LLM invocations, showing hook context type
+**Verdict:** PASS - All four legacy hooks (before/after_llm_call, before/after_tool_call) fired around the LLM and tool invocations, showing the hook context type
+
+> These four decorators are the legacy dialect, kept as adapters over the unified interception dispatcher. See `26_interception_hooks.py` for the `@on(InterceptionPoint....)` API and the execution/step boundary points.
 
 ---
 
@@ -850,3 +868,105 @@ Result:
 > crews as A2A endpoints). Requires `crewai[a2a]` for full client/server functionality.
 
 **Verdict:** PASS - A2AClientConfig and A2AServerConfig structure demonstration, local crew execution with coordinator pattern, cross-framework interop explanation
+
+---
+
+## 26_interception_hooks.py
+
+```
+$ uv run python 26_interception_hooks.py
+
+=== Run 1: boundary + step hooks on a successful run ===
+[EXECUTION_START] inputs={'topic': 'the new interception hooks'}
+[INPUT] injected audience -> backend engineers
+[PRE_STEP] kind=task step='Write exactly two sentences about the ne' agent=Release Notes Writer
+[POST_STEP] step='Write exactly two sentences about the ne' chars=246
+[OUTPUT] redacted an email address from the final answer
+[EXECUTION_END] status=completed error=None
+
+Final (post-redaction) output:
+New interception hooks have been implemented to enhance request and response
+manipulation capabilities in the middleware. These hooks allow for more granular
+control over data processing and improved logging features.
+Contact: [EMAIL-REDACTED]
+
+=== Run 2: a hook aborts the run with HookAborted ===
+[EXECUTION_END] status=failed error=HookAborted('topic is not on the approved release-notes allowlist')
+kickoff() raised HookAborted: topic is not on the approved release-notes allowlist (source=topic-allowlist)
+```
+
+> Two things here are only expressible with the unified API. The `INPUT` hook is
+> load-bearing: `kickoff()` never passes `audience`, so without the injection the
+> task template would fail to interpolate. And `EXECUTION_END` fires on the aborted
+> run too, with `status="failed"` and the `HookAborted` in `ctx.error`, before the
+> exception propagates out of `kickoff()`.
+
+**Verdict:** PASS - All six new interception points fired (EXECUTION_START, INPUT, OUTPUT, EXECUTION_END, PRE_STEP, POST_STEP); input injection, output redaction, `clear_all_hooks()` and a `HookAborted` policy gate all demonstrated
+
+---
+
+## 27_frame_streaming.py
+
+```
+$ uv run python 27_frame_streaming.py
+
+=== 1. LLM.stream_events() -> stream.llm ===
+A stream frame is a data structure used in streaming protocols to encapsulate a
+sequence of data packets for efficient transmission and processing in real-time
+applications.
+result: A stream frame is a data structure used in streaming protocols to ...
+
+=== 2. Flow.stream_events() -> stream.interleave(['flow', 'tools']) ===
+[flow] seq=1 flow_started ns=flow/ReleaseFlow
+[flow] seq=3 method_execution_started ns=flow/ReleaseFlow/report
+[flow] seq=7 flow_started ns=flow/AgentExecutor
+[tools] seq=11 tool_usage_started ns=tools/lookup_release_date/Release Reporter/When was CrewAI 1.15.2 released?
+[tools] seq=12 tool_usage_finished ns=tools/lookup_release_date/Release Reporter/When was CrewAI 1.15.2 released?
+[flow] seq=16 flow_finished ns=flow/AgentExecutor
+[flow] seq=20 method_execution_finished ns=flow/ReleaseFlow/report
+[flow] seq=21 flow_finished ns=flow/ReleaseFlow
+
+frames by channel: {'flow': 6, 'custom': 9, 'llm': 4, 'tools': 2}
+result: CrewAI 1.15.2 was released on January 14, 2026.
+```
+
+> The first block prints `frame.content` token by token off `stream.llm`. The second
+> shows `interleave(['flow', 'tools'])` dropping the 9 `custom` and 4 `llm` frames
+> while keeping the remaining ones in emission order (`seq` is global, so the gaps
+> are the filtered frames). Frames stay buffered after consumption, which is what
+> lets `stream.frames` be counted per channel afterwards.
+
+**Verdict:** PASS - `LLM.stream_events()` and `Flow.stream_events()` both produced StreamFrames through the `StreamSession` context manager; channel projections and `stream.result` work as documented
+
+---
+
+## 28_tool_failures.py
+
+```
+$ uv run python 28_tool_failures.py
+
+=== 1. Default policy (WARN) ===
+[EVENT] ToolFailureDetectedEvent tool=check_inventory code=sku_not_found policy=warn
+
+Answer: SKU 'SKU-9' is not in the warehouse catalog.
+has_tool_failures: True
+  tool=check_inventory code=sku_not_found reason=tool_reported retryable=False agent=Inventory Clerk
+  args={'sku': 'SKU-9'} message=SKU 'SKU-9' is not in the warehouse catalog
+
+=== 2. Precedence (tool RAISE over crew IGNORE) ===
+[EVENT] ToolFailureDetectedEvent tool=check_inventory code=sku_not_found policy=raise
+ERROR:crewai.flow.runtime:Error executing listener execute_native_tool: Tool 'check_inventory'
+  failed during 'How many units of SKU-9 are in stock?': SKU 'SKU-9' is not in the
+  warehouse catalog (code: sku_not_found)
+kickoff() aborted: Tool 'check_inventory' failed during 'How many units of SKU-9 are in stock?':
+  SKU 'SKU-9' is not in the warehouse catalog (code: sku_not_found)
+```
+
+> Run 1 completes: the agent reads the failure text and answers, but the run is no
+> longer recorded as a clean success - `has_tool_failures` is `True` and the record
+> carries the code, reason, retryable flag and the arguments that failed. Run 2 sets
+> `IGNORE` on the crew and `RAISE` on the tool; the tool wins the precedence chain
+> (tool -> task -> agent -> crew) and `kickoff()` aborts with
+> `ToolExecutionFailedError`.
+
+**Verdict:** PASS - A `ToolFailure` returned from `BaseTool._run` was recorded on the crew output, emitted as `ToolFailureDetectedEvent`, and escalated to an abort under the tool-scoped `RAISE` policy

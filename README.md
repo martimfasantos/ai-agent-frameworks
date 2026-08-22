@@ -159,7 +159,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/crewai.svg" alt="CrewAI" width="72">
         </picture>
       </td>
-      <td><code>1.14.7</code></td>
+      <td><code>1.15.11</code></td>
       <td>
           <a href="https://docs.crewai.com/">
             <picture>
