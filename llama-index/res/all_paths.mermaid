@@ -1,0 +1,30 @@
+flowchart TD
+    step_handle_result["handle_result"]:::stepStyle
+    event_ValidationEvent(["ValidationEvent"]):::defaultEventStyle
+    event_StopEvent(["StopEvent"]):::stopEventStyle
+    step_process_data["process_data"]:::stepStyle
+    event_ProcessEvent(["ProcessEvent"]):::defaultEventStyle
+    step_start["start"]:::stepStyle
+    event_StartEvent(["StartEvent"]):::startEventStyle
+    step_handle_result --> event_StopEvent
+    event_ValidationEvent --> step_handle_result
+    step_process_data --> event_ValidationEvent
+    event_ProcessEvent --> step_process_data
+    step_start --> event_ProcessEvent
+    event_StartEvent --> step_start
+    classDef stepStyle fill:#ADD8E6,color:#000000,line-height:1.2
+    classDef externalStyle fill:#BEDAE4,color:#000000,line-height:1.2
+    classDef resourceStyle fill:#DDA0DD,color:#000000,line-height:1.2
+    classDef resourceConfigStyle fill:#B2DFDB,color:#000000,line-height:1.2
+    classDef startEventStyle fill:#E27AFF,color:#000000
+    classDef stopEventStyle fill:#FFA07A,color:#000000
+    classDef defaultEventStyle fill:#90EE90,color:#000000
+    classDef reactAgentStyle fill:#E27AFF,color:#000000
+    classDef codeActAgentStyle fill:#66ccff,color:#000000
+    classDef defaultAgentStyle fill:#90EE90,color:#000000
+    classDef toolStyle fill:#ff9966,color:#000000
+    classDef workflowBaseStyle fill:#90EE90,color:#000000
+    classDef workflowAgentStyle fill:#66ccff,color:#000000
+    classDef workflowToolStyle fill:#ff9966,color:#000000
+    classDef workflowHandoffStyle fill:#E27AFF,color:#000000
+    classDef childConnectorStyle fill:#E0E0E080,color:#555555,stroke-width:0px

@@ -1,0 +1,24 @@
+flowchart TD
+    workflow_base_user{"User"}:::workflowBaseStyle
+    workflow_base_output{"Output"}:::workflowBaseStyle
+    workflow_agent_ResearchAgent(["ResearchAgent"]):::workflowAgentStyle
+    workflow_agent_WriteAgent(["WriteAgent"]):::workflowAgentStyle
+    workflow_base_user --> workflow_agent_ResearchAgent
+    workflow_agent_ResearchAgent --> workflow_agent_WriteAgent
+    workflow_agent_WriteAgent --> workflow_base_output
+    classDef stepStyle fill:#ADD8E6,color:#000000,line-height:1.2
+    classDef externalStyle fill:#BEDAE4,color:#000000,line-height:1.2
+    classDef resourceStyle fill:#DDA0DD,color:#000000,line-height:1.2
+    classDef resourceConfigStyle fill:#B2DFDB,color:#000000,line-height:1.2
+    classDef startEventStyle fill:#E27AFF,color:#000000
+    classDef stopEventStyle fill:#FFA07A,color:#000000
+    classDef defaultEventStyle fill:#90EE90,color:#000000
+    classDef reactAgentStyle fill:#E27AFF,color:#000000
+    classDef codeActAgentStyle fill:#66ccff,color:#000000
+    classDef defaultAgentStyle fill:#90EE90,color:#000000
+    classDef toolStyle fill:#ff9966,color:#000000
+    classDef workflowBaseStyle fill:#90EE90,color:#000000
+    classDef workflowAgentStyle fill:#66ccff,color:#000000
+    classDef workflowToolStyle fill:#ff9966,color:#000000
+    classDef workflowHandoffStyle fill:#E27AFF,color:#000000
+    classDef childConnectorStyle fill:#E0E0E080,color:#555555,stroke-width:0px

@@ -1,0 +1,33 @@
+flowchart TD
+    external_step["external_step"]:::externalStyle
+    event_StartEvent_0(["StartEvent"]):::startEventStyle
+    step_start_1["start#1"]:::stepStyle
+    event_ProcessEvent_1(["ProcessEvent"]):::defaultEventStyle
+    step_process_data_1["process_data#1"]:::stepStyle
+    event_ValidationEvent_2(["ValidationEvent"]):::defaultEventStyle
+    step_handle_result_1["handle_result#1"]:::stepStyle
+    event_StopEvent_3(["StopEvent"]):::stopEventStyle
+    external_step --> event_StartEvent_0
+    event_StartEvent_0 --> step_start_1
+    step_start_1 --> event_ProcessEvent_1
+    external_step --> event_ProcessEvent_1
+    event_ProcessEvent_1 --> step_process_data_1
+    step_process_data_1 --> event_ValidationEvent_2
+    external_step --> event_ValidationEvent_2
+    event_ValidationEvent_2 --> step_handle_result_1
+    step_handle_result_1 --> event_StopEvent_3
+    classDef stepStyle fill:#ADD8E6,color:#000000,line-height:1.2
+    classDef externalStyle fill:#BEDAE4,color:#000000,line-height:1.2
+    classDef resourceStyle fill:#DDA0DD,color:#000000,line-height:1.2
+    classDef resourceConfigStyle fill:#B2DFDB,color:#000000,line-height:1.2
+    classDef startEventStyle fill:#E27AFF,color:#000000
+    classDef stopEventStyle fill:#FFA07A,color:#000000
+    classDef defaultEventStyle fill:#90EE90,color:#000000
+    classDef reactAgentStyle fill:#E27AFF,color:#000000
+    classDef codeActAgentStyle fill:#66ccff,color:#000000
+    classDef defaultAgentStyle fill:#90EE90,color:#000000
+    classDef toolStyle fill:#ff9966,color:#000000
+    classDef workflowBaseStyle fill:#90EE90,color:#000000
+    classDef workflowAgentStyle fill:#66ccff,color:#000000
+    classDef workflowToolStyle fill:#ff9966,color:#000000
+    classDef workflowHandoffStyle fill:#E27AFF,color:#000000

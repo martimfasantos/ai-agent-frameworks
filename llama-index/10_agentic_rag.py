@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, SummaryIndex, Settings
 from llama_index.llms.openai import OpenAI
 from llama_index.embeddings.openai import OpenAIEmbedding
@@ -7,6 +8,10 @@ from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.agent import FunctionAgent
 from llama_index.core.agent.workflow.workflow_events import ToolCall
 from settings import settings
+
+# llama_index.readers.file calls logging.basicConfig() on import, which would
+# otherwise turn every HTTP call into a log line
+logging.disable(logging.INFO)
 
 
 """
@@ -109,7 +114,7 @@ async def main():
     agent = FunctionAgent(
         llm=llm,
         tools=[vector_tool, summary_tool],
-        verbose=True
+        verbose=False  # step logging became functional in workflows 2.15.0
     )
 
     print("Agent created with multiple query strategies")

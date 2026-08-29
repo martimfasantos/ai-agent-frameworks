@@ -311,7 +311,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/llamaindex-text.svg" alt="LlamaIndex" width="110" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>0.14.20</code></td>
+      <td><code>0.14.23</code></td>
       <td>
           <a href="https://docs.llamaindex.ai/en/stable/">
             <picture>

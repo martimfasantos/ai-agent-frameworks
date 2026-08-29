@@ -11,22 +11,23 @@ In this example, we explore LlamaIndex Workflows with the following features:
 - Exposing workflows over HTTP with WorkflowServer
 - Running the server programmatically or via CLI
 - Workflow Debugger UI for visualization and debugging
-- API endpoints: /run, /run-nowait, /events, /results, /handlers
 - Streaming events via SSE or NDJSON
 - Sending events to running workflows (human-in-the-loop via API)
 - Canceling workflow runs
+- Opting into the context API with accept_context_api=True
 - Using WorkflowClient for programmatic server interaction
 
 The WorkflowServer class exposes workflows over a RESTful HTTP API.
 It includes a debugger UI at the root / path for visualizing, running,
 and debugging workflows in real time. Workflows can be run synchronously
-(/run) or asynchronously (/run-nowait), with events streamed via
-/events/{handler_id}. The WorkflowClient provides a Python interface
-for listing workflows, running them, streaming events, and sending
-human-in-the-loop responses programmatically.
+(/workflows/{name}/run) or asynchronously (/workflows/{name}/run-nowait),
+with events streamed via /events/{handler_id}. The WorkflowClient provides
+a Python interface for listing workflows, running them, streaming events,
+and sending human-in-the-loop responses programmatically.
 
 For more details, visit:
 https://developers.llamaindex.ai/python/llamaagents/workflows/deployment/
+https://developers.llamaindex.ai/python/llamaagents/workflows/client/
 -------------------------------------------------------
 """
 
@@ -51,7 +52,10 @@ class GreetingWorkflow(Workflow):
 # --- 2. Create a WorkflowServer and add workflows ---
 greet_wf = GreetingWorkflow()
 
-server = WorkflowServer()
+# Since llama-agents-server 0.4.0 the context API is opt-in: without
+# accept_context_api=True a run request carrying a "context" field is rejected
+# with a 400 ("Context API is disabled").
+server = WorkflowServer(accept_context_api=True)
 server.add_workflow("greet", greet_wf)
 
 
@@ -74,13 +78,17 @@ if __name__ == "__main__":
 # Features: workflow visualization, event logging, human-in-the-loop support,
 # multiple runs tracking, and automatic schema detection.
 
-# --- 6. API Endpoints ---
-# GET  /health                    → {"status": "healthy"}
-# GET  /workflows                 → list of registered workflow names
-# POST /workflows/{name}/run      → run synchronously, returns result
-# POST /workflows/{name}/run-nowait → run async, returns handler_id
-# GET  /events/{handler_id}       → stream events (SSE or NDJSON)
-# POST /events/{handler_id}       → send an event (human-in-the-loop)
-# GET  /handlers/{handler_id}     → get workflow result (202 if still running)
-# GET  /handlers                  → list all handlers (running + completed)
+# --- 6. API Endpoints (as reported by server.openapi_schema()) ---
+# GET  /health                       → {"status": "healthy"}
+# GET  /workflows                    → list of registered workflow names
+# GET  /workflows/{name}/schema      → JSON schema of the start/stop events
+# GET  /workflows/{name}/events      → event types the workflow can emit
+# GET  /workflows/{name}/representation → structure for the debugger UI
+# POST /workflows/{name}/run         → run synchronously, returns result
+# POST /workflows/{name}/run-nowait  → run async, returns handler_id
+# GET  /events/{handler_id}          → stream events (SSE or NDJSON)
+# POST /events/{handler_id}          → send an event (human-in-the-loop)
+# GET  /handlers                     → list all handlers (running + completed)
+# GET  /handlers/{handler_id}        → handler status
+# GET  /results/{handler_id}         → workflow result (202 if still running)
 # POST /handlers/{handler_id}/cancel → cancel a running workflow

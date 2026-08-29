@@ -8,141 +8,37 @@ Workflows in LlamaIndex provide a flexible way to orchestrate complex multi-step
 
 ## Examples
 
-### 1. Branches and Loops (`branches_and_loops.py`)
-Demonstrates conditional branching and looping patterns in workflows.
-
-**Features:**
-- Random path selection between branches
-- Dynamic loop iteration counts
-- Conditional loop termination
-
-**Documentation:** https://developers.llamaindex.ai/python/llamaagents/workflows/branches_and_loops/
-
----
-
-### 2. Managing State (`managing_state.py`)
-Shows how to maintain and share state across workflow steps.
-
-**Features:**
-- Context-based state management
-- Typed state with Pydantic models
-- Atomic state updates with locking
-- Persistent state across multiple runs
-
-**Documentation:** https://developers.llamaindex.ai/python/llamaagents/workflows/managing_state/
-
----
-
-### 3. Streaming (`streaming.py`)
-Demonstrates real-time event streaming for progress updates.
-
-**Features:**
-- Progress event emission with `write_event_to_stream()`
-- Token-by-token LLM response streaming
-- Real-time user feedback during execution
-
-**Documentation:** https://developers.llamaindex.ai/python/llamaagents/workflows/streaming/
-
----
-
-### 4. Concurrent Execution (`concurrent_execution.py`)
-Shows how to run workflow steps in parallel.
-
-**Features:**
-- Emitting multiple events with `send_event()`
-- Concurrent step execution with `num_workers`
-- Collecting parallel results with `collect_events()`
-
-**Documentation:** https://developers.llamaindex.ai/python/llamaagents/workflows/concurrent_execution/
-
----
-
-### 5. Human in the Loop (`human_in_the_loop.py`)
-Demonstrates interactive workflows that wait for user input.
-
-**Features:**
-- `InputRequiredEvent` for requesting user input
-- `HumanResponseEvent` for handling responses
-- Pausing and resuming workflow execution
-
-**Documentation:** https://developers.llamaindex.ai/python/llamaagents/workflows/human_in_the_loop/
-
----
-
-### 6. Customizing Entry/Exit Points (`customizing_entry_exit_points.py`)
-Shows how to create custom Start and Stop events for type safety.
-
-**Features:**
-- Custom `StartEvent` with typed fields
-- Custom `StopEvent` with structured returns
-- Better IDE support and type checking
-
-**Documentation:** https://developers.llamaindex.ai/python/llamaagents/workflows/customizing_entry_exit_points/
-
----
-
-### 7. Drawing Workflows (`drawing.py`)
-Demonstrates workflow visualization capabilities.
-
-**Features:**
-- Drawing all possible workflow paths
-- Exporting diagrams to HTML
-- Using WorkflowServer for interactive debugging
-
-**Documentation:** https://developers.llamaindex.ai/python/llamaagents/workflows/drawing/
-
-**Note:** Requires `pip install llama-index-utils-workflow`
-
----
-
-### 8. Resources (`resources.py`)
-Shows how to inject external dependencies into workflow steps.
-
-**Features:**
-- Resource injection with factory functions
-- Sharing resources across steps
-- Resource caching control
-
-**Documentation:** https://developers.llamaindex.ai/python/llamaagents/workflows/resources/
-
----
-
-### 9. Retry Steps (`retry_steps.py`)
-Demonstrates automatic retry mechanisms for handling failures.
-
-**Features:**
-- `ConstantDelayRetryPolicy` for fixed intervals
-- `ExponentialBackoffRetryPolicy` for rate limiting
-- Custom retry policies
-
-**Documentation:** https://developers.llamaindex.ai/python/llamaagents/workflows/retry_steps/
-
----
-
-### 10. Observability (`observability.py`)
-Shows how to integrate observability and tracing.
-
-**Features:**
-- OpenTelemetry integration
-- Custom spans and events
-- Third-party tools (Arize Phoenix, Langfuse)
-
-**Documentation:** https://developers.llamaindex.ai/python/llamaagents/workflows/observability/
+| # | File | Features | Documentation |
+|---|------|----------|---------------|
+| 01 | `01_gettings_started.py` | Events, steps, a first workflow | [getting_started](https://developers.llamaindex.ai/python/llamaagents/workflows/) |
+| 02 | `02_branches_and_loops.py` | Conditional branching, loops, termination | [branches_and_loops](https://developers.llamaindex.ai/python/llamaagents/workflows/branches_and_loops/) |
+| 03 | `03_managing_state.py` | Untyped/typed state, locking, persistence | [managing_state](https://developers.llamaindex.ai/python/llamaagents/workflows/managing_state/) |
+| 04 | `04_streaming.py` | `write_event_to_stream()`, token streaming, termination events | [streaming](https://developers.llamaindex.ai/python/llamaagents/workflows/streaming/) |
+| 05 | `05_concurrent_execution.py` | `list[Event]` fan-out/fan-in, `Collect(Take(n))`, multi-parameter joins, `num_workers`, dynamic `send_event`/`collect_events` | [concurrent_execution](https://developers.llamaindex.ai/python/llamaagents/workflows/concurrent_execution/) |
+| 06 | `06_human_in_the_loop.py` | `InputRequiredEvent`, `HumanResponseEvent`, stop/resume | [human_in_the_loop](https://developers.llamaindex.ai/python/llamaagents/workflows/human_in_the_loop/) |
+| 07 | `07_customizing_entry_exit_points.py` | Custom `StartEvent` / `StopEvent` for type safety | [customizing_entry_exit_points](https://developers.llamaindex.ai/python/llamaagents/workflows/customizing_entry_exit_points/) |
+| 08 | `08_drawing_workflow.py` | HTML and Mermaid renderers, `draw_agent_workflow` | [drawing](https://developers.llamaindex.ai/python/llamaagents/workflows/drawing/) |
+| 09 | `09_resource_objects.py` | `Resource` / `ResourceConfig` dependency injection | [resources](https://developers.llamaindex.ai/python/llamaagents/workflows/resources/) |
+| 10 | `10_retry_steps_execution.py` | `retry_policy(retry=, wait=, stop=)` composed from primitives | [retry_steps](https://developers.llamaindex.ai/python/llamaagents/workflows/retry_steps/) |
+| 11 | `11_workflow_as_a_server.py` | `WorkflowServer`, HTTP API, debugger UI, `accept_context_api` | [deployment](https://developers.llamaindex.ai/python/llamaagents/workflows/deployment/) |
+| 12 | `12_observability.py` | OpenTelemetry tracing, `verbose=True` step logging | [observability](https://developers.llamaindex.ai/python/llamaagents/workflows/observability/) |
+| 13 | `13_error_recovery.py` | `@catch_error`, `StepFailedEvent`, `Context.retry_info()`, `max_recoveries` | [retry_steps](https://developers.llamaindex.ai/python/llamaagents/workflows/retry_steps/) |
+| 14 | `14_durable_workflows.py` | `ctx.to_dict()` / `Context.from_dict()`, `StepStateChanged`, `Resource` | [durable_workflows](https://developers.llamaindex.ai/python/llamaagents/workflows/durable_workflows/) |
+| 15 | `15_testing_workflows.py` | `WorkflowTestRunner`, `.collected` / `.event_types` / `.ctx` | [testing](https://developers.llamaindex.ai/python/llamaagents/workflows/testing/) |
 
 ## Running the Examples
 
-Each example can be run independently:
+Run them from the parent `llama-index/` directory so `settings.py` and `res/` resolve:
 
 ```bash
-# Navigate to the llama-index directory
 cd llama-index
-
-# Run any example
-python agent_workflows/branches_and_loops.py
-python agent_workflows/managing_state.py
-python agent_workflows/streaming.py
+uv run agent_workflows/01_gettings_started.py
+uv run agent_workflows/05_concurrent_execution.py
 # ... etc
 ```
+
+`08_drawing_workflow.py` writes its diagrams into `llama-index/res/`.
+`11_workflow_as_a_server.py` serves on `0.0.0.0:8080` until interrupted.
 
 ## Prerequisites
 
@@ -178,23 +74,6 @@ Or configure in `settings.py` as used throughout the llama-index examples.
 - **Official Documentation:** https://developers.llamaindex.ai/python/llamaagents/workflows/
 - **API Reference:** https://developers.llamaindex.ai/python/workflows-api-reference/
 - **LlamaIndex Main Docs:** https://docs.llamaindex.ai/
-
-## File Structure
-
-```
-agent_workflows/
-├── README.md                          # This file
-├── branches_and_loops.py             # Branching and looping
-├── managing_state.py                  # State management
-├── streaming.py                       # Event streaming
-├── concurrent_execution.py            # Parallel execution
-├── human_in_the_loop.py              # User interaction
-├── customizing_entry_exit_points.py  # Custom events
-├── drawing.py                         # Visualization
-├── resources.py                       # Dependency injection
-├── retry_steps.py                     # Retry policies
-└── observability.py                   # Tracing and monitoring
-```
 
 ## Contributing
 
