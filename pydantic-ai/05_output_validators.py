@@ -23,7 +23,7 @@ and constraints. The agent automatically retries when validation fails,
 prompting the model to generate a valid output based on the validation feedback.
 
 For more details, visit:
-https://ai.pydantic.dev/output/#output-validator
+https://pydantic.dev/docs/ai/core-concepts/output/#output-validator-functions
 -----------------------------------------------------------------------
 """
 

@@ -27,7 +27,7 @@ providing better user experience for real-time applications and allowing
 for observability of the agent's internal behaviour.
 
 For more details, visit:
-https://ai.pydantic.dev/output/#streamed-text
+https://pydantic.dev/docs/ai/core-concepts/output/#streaming-text
 -----------------------------------------------------------------------
 """
 
@@ -72,12 +72,15 @@ async def main():
     print("\n")
 
     print("\n=== Stream All Events and filtering ===")
+    # run_stream_events() is an async context manager in v2; the returned
+    # object is the event stream to iterate over.
     messages = []
-    async for event in weather_agent.run_stream_events("Weather in Tokyo please"):
-        if isinstance(event, FinalResultEvent):
-            messages.append(f"Final result event: {event.tool_name}")
-        elif isinstance(event, FunctionToolCallEvent):
-            messages.append(f"Tool call: {event.part.tool_name}")
+    async with weather_agent.run_stream_events("Weather in Tokyo please") as events:
+        async for event in events:
+            if isinstance(event, FinalResultEvent):
+                messages.append(f"Final result event: {event.tool_name}")
+            elif isinstance(event, FunctionToolCallEvent):
+                messages.append(f"Tool call: {event.part.tool_name}")
 
     for message in messages:
         print(f"[STREAM EVENT] {message}")

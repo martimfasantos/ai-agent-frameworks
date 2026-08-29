@@ -31,7 +31,7 @@ explicit human authorization. Tools can conditionally or always require approval
 and the agent pauses execution until receiving approval decisions for each tool call.
 
 For more details, visit:
-https://ai.pydantic.dev/deferred-tools/#human-in-the-loop-tool-approval
+https://pydantic.dev/docs/ai/tools-toolsets/deferred-tools/#human-in-the-loop-tool-approval
 -----------------------------------------------------------------------
 """
 

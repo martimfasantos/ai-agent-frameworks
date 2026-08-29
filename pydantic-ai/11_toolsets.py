@@ -29,7 +29,7 @@ tool libraries, controlling which tools are available per context, and
 avoiding name collisions when combining tools from different sources.
 
 For more details, visit:
-https://ai.pydantic.dev/toolsets/
+https://pydantic.dev/docs/ai/tools-toolsets/toolsets/
 -----------------------------------------------------------------------
 """
 

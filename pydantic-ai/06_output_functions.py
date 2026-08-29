@@ -22,7 +22,7 @@ desired format. TextOutput wraps a function that receives the agent's
 text response and returns a processed result.
 
 For more details, visit:
-https://ai.pydantic.dev/output/#output-functions
+https://pydantic.dev/docs/ai/core-concepts/output/#output-functions
 -----------------------------------------------------------------------
 """
 

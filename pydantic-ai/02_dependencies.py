@@ -23,7 +23,7 @@ dependencies, enabling clean separation between agent logic and
 application state.
 
 For more details, visit:
-https://ai.pydantic.dev/dependencies/
+https://pydantic.dev/docs/ai/core-concepts/dependencies/
 -----------------------------------------------------------------------
 """
 

@@ -2,9 +2,8 @@ import asyncio
 
 from dotenv import load_dotenv
 
-from pydantic_ai import Agent
-from pydantic_ai.builtin_tools import WebSearchTool, CodeExecutionTool
-from pydantic_ai.models.openai import OpenAIResponsesModel
+from pydantic_ai import Agent, CodeExecutionTool, WebSearchTool
+from pydantic_ai.capabilities import NativeTool
 
 from settings import settings
 
@@ -13,27 +12,32 @@ load_dotenv()
 """
 -----------------------------------------------------------------------
 In this example, we explore Pydantic AI with the following features:
-- Built-in WebSearchTool for grounding responses in live web results
-- Built-in CodeExecutionTool for running Python code in a sandbox
-- Combining multiple built-in tools in a single agent
-- Using OpenAIResponsesModel (required for built-in tools)
+- Native WebSearchTool for grounding responses in live web results
+- Native CodeExecutionTool for running Python code in a sandbox
+- Wrapping native tools in the NativeTool capability
+- Combining multiple native tools in a single agent
 
-Built-in tools are pre-configured capabilities provided by the model
-provider (e.g. OpenAI). Unlike custom tools, they run server-side
-and require no local implementation. WebSearchTool grounds answers in
-real search results, while CodeExecutionTool lets the model write and
-execute Python code to solve computational problems.
+Native tools (called "built-in tools" before v2) are pre-configured
+capabilities provided by the model provider (e.g. OpenAI). Unlike custom
+tools, they run server-side and require no local implementation.
+WebSearchTool grounds answers in real search results, while
+CodeExecutionTool lets the model write and execute Python code to solve
+computational problems.
 
-NOTE: Built-in tools require OpenAIResponsesModel (Responses API),
-not the default ChatModel (Chat Completions API).
+NOTE: On OpenAI, native tools are only supported on the Responses API,
+so this is the one example that overrides the model from settings.py.
+In v2 the provider prefix picks the API: `openai-responses:` (also what
+a bare `openai:` now means) for the Responses API, `openai-chat:` for
+Chat Completions, which does not support these tools.
 
 For more details, visit:
-https://ai.pydantic.dev/builtin-tools/
+https://pydantic.dev/docs/ai/tools-toolsets/native-tools/
 -----------------------------------------------------------------------
 """
 
-# Built-in tools require the Responses API model
-responses_model = OpenAIResponsesModel(settings.OPENAI_MODEL_NAME)
+# Native tools need the Responses API, so swap the provider prefix while
+# keeping the model name configured in settings.py.
+RESPONSES_MODEL = "openai-responses:" + settings.OPENAI_MODEL_NAME.split(":")[-1]
 
 
 # --------------------------------------------------------------
@@ -43,10 +47,10 @@ print("=== Example 1: Web Search Tool ===")
 
 # --- 1. Create agent with web search ---
 search_agent = Agent(
-    model=responses_model,
+    model=RESPONSES_MODEL,
     instructions="Answer questions using web search. Be concise (1-2 sentences).",
-    builtin_tools=[
-        WebSearchTool(search_context_size="low"),
+    capabilities=[
+        NativeTool(WebSearchTool(search_context_size="low")),
     ],
 )
 
@@ -63,10 +67,10 @@ print("=== Example 2: Code Execution Tool ===")
 
 # --- 1. Create agent with code execution ---
 code_agent = Agent(
-    model=responses_model,
+    model=RESPONSES_MODEL,
     instructions="Solve problems by writing and executing Python code. Show the result.",
-    builtin_tools=[
-        CodeExecutionTool(),
+    capabilities=[
+        NativeTool(CodeExecutionTool()),
     ],
 )
 
@@ -87,14 +91,14 @@ print("=== Example 3: Combined Web Search + Code Execution ===")
 # --- 1. Create agent with both tools ---
 async def run_combined():
     combined_agent = Agent(
-        model=responses_model,
+        model=RESPONSES_MODEL,
         instructions=(
             "You can search the web for information and execute Python code. "
             "Be concise."
         ),
-        builtin_tools=[
-            WebSearchTool(search_context_size="low"),
-            CodeExecutionTool(),
+        capabilities=[
+            NativeTool(WebSearchTool(search_context_size="low")),
+            NativeTool(CodeExecutionTool()),
         ],
     )
 

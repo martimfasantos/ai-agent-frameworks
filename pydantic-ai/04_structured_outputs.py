@@ -25,7 +25,7 @@ The example shows different output modes (Tool, Native, Prompted)
 and how to handle multiple output types with union types.
 
 For more details, visit:
-https://ai.pydantic.dev/output/
+https://pydantic.dev/docs/ai/core-concepts/output/
 -----------------------------------------------------------------------
 """
 
@@ -62,7 +62,7 @@ union_agent = Agent(
 )
 
 # --- 3. Different Output Modes ---
-# reference: https://ai.pydantic.dev/output/#output-modes
+# reference: https://pydantic.dev/docs/ai/core-concepts/output/#output-modes
 
 # Tool Output (default) - uses function calling to format output
 tool_output_agent = Agent(

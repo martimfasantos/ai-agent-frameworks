@@ -28,7 +28,7 @@ enabling real-world integrations while maintaining control over resource usage t
 different tool registration patterns and comprehensive monitoring capabilities.
 
 For more details, visit:
-https://ai.pydantic.dev/tools/
+https://pydantic.dev/docs/ai/tools-toolsets/tools/
 -----------------------------------------------------------------------------
 """
 
