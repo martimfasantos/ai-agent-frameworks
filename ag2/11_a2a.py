@@ -1,13 +1,12 @@
 import asyncio
 import os
-import threading
-import time
 
+import httpx
 import uvicorn
 
-from autogen import ConversableAgent, LLMConfig
-from autogen.a2a.client import A2aRemoteAgent
-from autogen.a2a.server import A2aAgentServer
+from ag2 import Agent, tool
+from ag2.a2a import A2AConfig, A2AServer, build_card
+from ag2.config import OpenAIConfig
 
 from settings import settings
 
@@ -16,99 +15,93 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 """
 -------------------------------------------------------
 In this example, we explore AG2 with the following features:
-- A2A (Agent-to-Agent) protocol for remote agent communication
-- A2aAgentServer to expose an agent as an A2A-compatible service
-- A2aRemoteAgent to connect to a remote A2A agent
+- A2AServer + build_card to expose an Agent over the A2A protocol
+- A2AConfig as a ModelConfig, making a remote agent look local
+- Server-side tools executing on the server, not the caller
 
-The A2A protocol enables agents to communicate across
-network boundaries. A2aAgentServer wraps an AG2 agent as
-an ASGI web service, and A2aRemoteAgent connects to it as
-a client. This enables distributed multi-agent systems.
+In AG2 1.0 the remote agent is no longer a special Agent subclass:
+A2AConfig is a model config, so a plain Agent pointed at a card URL
+speaks A2A and keeps the familiar ask() / reply.ask() shape. The
+server publishes an agent card at /.well-known/agent-card.json,
+which the client fetches to pick a transport.
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/a2a/
+https://github.com/ag2ai/ag2/blob/v1.0.1/website/docs/user-guide/a2a/server.mdx
 -------------------------------------------------------
 """
 
 PORT = 18765
+BASE_URL = f"http://127.0.0.1:{PORT}"
 
 
-def run_server() -> None:
-    """Run the A2A server in a background thread."""
-    # --- 1. Create the server-side agent ---
-    llm_config = LLMConfig({"model": settings.OPENAI_MODEL_NAME})
+# --- 1. A tool that runs on the SERVER side ---
+@tool
+def glossary(term: str) -> str:
+    """Look up the house translation for a term."""
+    house_style = {"agent": "agent (fr: « agent »)", "tool": "outil"}
+    return house_style.get(term.lower(), f"no house entry for {term}")
 
-    server_agent = ConversableAgent(
-        name="translator",
-        system_message=(
-            "You are a language translator. When given text, translate it "
-            "to French. Only output the French translation, nothing else."
+
+def build_server() -> uvicorn.Server:
+    """Build the A2A JSON-RPC server around a translator agent."""
+    server_agent = Agent(
+        "translator",
+        prompt=(
+            "You are a translator. Translate the user's text to French. "
+            "Consult the glossary tool for any term that might have a house "
+            "translation. Output only the French translation."
         ),
-        llm_config=llm_config,
-        human_input_mode="NEVER",
+        config=OpenAIConfig(model=settings.OPENAI_MODEL_NAME),
+        tools=[glossary],
     )
 
-    # --- 2. Wrap the agent as an A2A server ---
-    a2a_server = A2aAgentServer(
-        agent=server_agent,
-        url=f"http://localhost:{PORT}",
+    # --- 2. Wrap it: build_card publishes discovery metadata ---
+    a2a_server = A2AServer(server_agent)
+    card = build_card(server_agent, url=BASE_URL)
+    asgi = a2a_server.build_jsonrpc(url=BASE_URL, card=card)
+
+    return uvicorn.Server(
+        uvicorn.Config(asgi, host="127.0.0.1", port=PORT, log_level="warning")
     )
 
-    app = a2a_server.build_starlette_app()
 
-    # Run uvicorn in this thread (blocking)
-    config = uvicorn.Config(app, host="0.0.0.0", port=PORT, log_level="warning")
-    server = uvicorn.Server(config)
-    server.run()
+async def main() -> None:
+    print("=== A2A: agent-to-agent over JSON-RPC ===\n")
 
+    # --- 3. Start the server in the background ---
+    server = build_server()
+    server_task = asyncio.create_task(server.serve())
+    while not server.started:
+        await asyncio.sleep(0.1)
+    print(f"Server listening on {BASE_URL}")
 
-async def run_client() -> None:
-    """Connect to the A2A server and send a request."""
-    # --- 3. Create a remote agent pointing to the server ---
-    remote_agent = A2aRemoteAgent(
-        url=f"http://localhost:{PORT}",
-        name="remote_translator",
-    )
+    # --- 4. Fetch the published agent card ---
+    async with httpx.AsyncClient() as client:
+        card = (await client.get(f"{BASE_URL}/.well-known/agent-card.json")).json()
+    print(f"Agent card: name={card['name']!r} version={card['version']}")
+    bindings = [i["protocolBinding"] for i in card["supportedInterfaces"]]
+    print(f"Bindings:   {bindings}")
+    print(f"Skills:     {[s['id'] for s in card['skills']]}\n")
 
-    # --- 4. Create a local user agent ---
-    user = ConversableAgent(
-        name="user",
-        human_input_mode="NEVER",
-        llm_config=False,
-        is_termination_msg=lambda x: True,
-    )
+    # --- 5. A plain Agent whose 'model' is the remote A2A server ---
+    remote = Agent("remote_translator", config=A2AConfig(card_url=BASE_URL))
 
-    # --- 5. Chat with the remote agent via A2A ---
-    print("Sending request to remote A2A agent...\n")
-    result = await user.a_initiate_chat(
-        remote_agent,
-        message="Hello, how are you today?",
-        max_turns=1,
-    )
+    reply = await remote.ask("Translate: 'Hello, how are you today?'")
+    print("Turn 1")
+    print("  sent:     Hello, how are you today?")
+    print(f"  received: {reply.body}")
 
-    print(f"\n=== Translation Result ===")
-    print(f"Original: Hello, how are you today?")
-    print(f"French:   {result.summary}")
+    # --- 6. Continuation: history is shipped with every A2A call ---
+    reply2 = await reply.ask("Now translate: 'The agent used a tool.'")
+    print("\nTurn 2 (same conversation, server-side glossary tool consulted)")
+    print("  sent:     The agent used a tool.")
+    print(f"  received: {reply2.body}")
 
-
-def main() -> None:
-    """Run the A2A demo."""
-    print("=== A2A: Agent-to-Agent Protocol ===\n")
-
-    # Start the server in a background thread
-    print(f"Starting A2A server on port {PORT}...")
-    server_thread = threading.Thread(target=run_server, daemon=True)
-    server_thread.start()
-
-    # Wait for the server to start
-    time.sleep(3)
-    print("Server ready.\n")
-
-    # Run the client
-    asyncio.run(run_client())
-
-    print("\n=== A2A Demo Complete ===")
+    # --- 7. Shut the server down ---
+    server.should_exit = True
+    await server_task
+    print("\n=== A2A demo complete ===")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -1,9 +1,9 @@
 import asyncio
 import os
 
-from autogen.beta import Agent, MemoryStream
-from autogen.beta.config import OpenAIConfig
-from autogen.beta.events import ModelRequest, ModelResponse, ModelMessage
+from ag2 import Agent, MemoryStream
+from ag2.config import OpenAIConfig
+from ag2.events import ModelRequest, ModelResponse, ModelMessage
 
 from settings import settings
 
@@ -11,13 +11,13 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 
 """
 -------------------------------------------------------
-In this example, we explore AG2's Beta Agent with the following features:
+In this example, we explore AG2's Agent with the following features:
 - MemoryStream for event capture and observation
 - Subscribing to agent events in real time
 - Event types: ModelRequest, ModelMessage, ModelResponse
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/release-roadmap/
+https://github.com/ag2ai/ag2/blob/v1.0.1/website/docs/user-guide/advanced/stream.mdx
 -------------------------------------------------------
 """
 

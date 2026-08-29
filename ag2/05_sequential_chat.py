@@ -1,6 +1,18 @@
+import asyncio
 import os
 
-from autogen import ConversableAgent, LLMConfig
+from ag2 import Agent
+from ag2.config import OpenAIConfig
+from ag2.knowledge import MemoryKnowledgeStore
+from ag2.network import (
+    EV_CHANNEL_CLOSED,
+    EV_PACKET,
+    EV_TEXT,
+    WORKFLOW_TYPE,
+    Hub,
+    TransitionGraph,
+)
+from ag2.testing import TestConfig
 
 from settings import settings
 
@@ -9,96 +21,111 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 """
 -------------------------------------------------------
 In this example, we explore AG2 with the following features:
-- Sequential chat pipeline using initiate_chats()
-- Automatic carryover of summaries between chats
-- Multi-step workflows with different specialist agents
+- ag2.network Hub as the authoritative multi-agent coordinator
+- TransitionGraph.sequence() for a deterministic agent pipeline
+- Replaying the finished conversation from the hub's write-ahead log
 
-Sequential chat chains multiple two-agent conversations
-together, where each chat's summary becomes the carryover
-context for the next chat. This enables multi-step
-workflows where each agent handles a specific task.
+Classic AG2's initiate_chats() sequential chat has no direct
+successor in 1.0. The closest documented idiom is a workflow channel
+driven by TransitionGraph.sequence(), which routes each speaker to
+the next and auto-terminates after the last stage. Ordering is
+deterministic and the whole transcript is recorded in the hub's WAL,
+so each stage sees everything the previous ones produced.
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/advanced-concepts/orchestration/sequential-chat/
+https://github.com/ag2ai/ag2/blob/v1.0.1/website/docs/user-guide/network/pattern_cookbook/pipeline.mdx
 -------------------------------------------------------
 """
 
-# --- 1. Configure LLM ---
-llm_config = LLMConfig({"model": settings.OPENAI_MODEL_NAME})
+# Registered agents also get the network's peers/channels/delegate tools.
+# This pipeline is pure text relay, so each stage is told to skip them.
+DIRECT_REPLY = "Do not call any tools — answer directly from the transcript above. "
 
-# --- 2. Create the orchestrator agent ---
-orchestrator = ConversableAgent(
-    name="orchestrator",
-    system_message=(
-        "You are a project orchestrator. You coordinate work between "
-        "specialists and provide context for each step."
-    ),
-    llm_config=llm_config,
-    human_input_mode="NEVER",
-)
 
-# --- 3. Create specialist agents ---
-researcher = ConversableAgent(
-    name="researcher",
-    system_message=(
-        "You are a technology researcher. When given a topic, provide "
-        "3-4 key facts or trends about it. Be concise and factual."
-    ),
-    llm_config=llm_config,
-    human_input_mode="NEVER",
-)
+async def main() -> None:
+    config = OpenAIConfig(model=settings.OPENAI_MODEL_NAME)
 
-analyst = ConversableAgent(
-    name="analyst",
-    system_message=(
-        "You are a business analyst. Given research findings, identify "
-        "2-3 business opportunities or implications. Be specific and brief."
-    ),
-    llm_config=llm_config,
-    human_input_mode="NEVER",
-)
+    # --- 1. Boot an in-process hub (registry + WAL + audit log) ---
+    hub = await Hub.open(MemoryKnowledgeStore(), ttl_sweep_interval=0)
 
-writer = ConversableAgent(
-    name="writer",
-    system_message=(
-        "You are an executive summary writer. Given research and analysis, "
-        "write a concise executive briefing (3-4 sentences) that synthesizes "
-        "the key findings and recommendations."
-    ),
-    llm_config=llm_config,
-    human_input_mode="NEVER",
-)
+    # --- 2. Create the pipeline stages ---
+    # The intake stage only injects the brief, so it needs no model.
+    intake_agent = Agent("intake", config=TestConfig())
 
-# --- 4. Run sequential chat pipeline ---
-print("=== Sequential Chat Pipeline ===\n")
+    researcher_agent = Agent(
+        "researcher",
+        prompt=(
+            "You are a technology researcher. " + DIRECT_REPLY +
+            "Reply on ONE line: `RESEARCH — <3 key facts, semicolon separated>`."
+        ),
+        config=config,
+    )
 
-chat_results = orchestrator.initiate_chats(
-    [
-        {
-            "recipient": researcher,
-            "message": "Research the current state of quantum computing in 2025.",
-            "max_turns": 1,
-            "summary_method": "last_msg",
-        },
-        {
-            "recipient": analyst,
-            "message": "Analyze the business implications of these findings.",
-            "max_turns": 1,
-            "summary_method": "last_msg",
-        },
-        {
-            "recipient": writer,
-            "message": "Write an executive briefing based on the research and analysis.",
-            "max_turns": 1,
-            "summary_method": "last_msg",
-        },
-    ]
-)
+    analyst_agent = Agent(
+        "analyst",
+        prompt=(
+            "You are a business analyst. " + DIRECT_REPLY +
+            "Reply on ONE line: `ANALYSIS — <2 business implications, semicolon "
+            "separated>`."
+        ),
+        config=config,
+    )
 
-# --- 5. Display pipeline results ---
-print("\n=== Pipeline Results ===")
-for i, (label, result) in enumerate(
-    zip(["Research", "Analysis", "Executive Briefing"], chat_results)
-):
-    print(f"\n--- Step {i + 1}: {label} ---")
-    print(result.summary[:200] + "..." if len(result.summary) > 200 else result.summary)
+    writer_agent = Agent(
+        "writer",
+        prompt=(
+            "You are an executive summary writer. " + DIRECT_REPLY +
+            "Synthesise the research and the analysis. "
+            "Reply on ONE line: `BRIEFING — <2 sentences>`."
+        ),
+        config=config,
+    )
+
+    # --- 3. Register every stage with the hub ---
+    intake = await hub.register(intake_agent)
+    researcher = await hub.register(researcher_agent)
+    analyst = await hub.register(analyst_agent)
+    writer = await hub.register(writer_agent)
+
+    # --- 4. Wire the deterministic order as a TransitionGraph ---
+    graph = TransitionGraph.sequence(
+        [intake.agent_id, researcher.agent_id, analyst.agent_id, writer.agent_id]
+    )
+
+    channel = await intake.open(
+        type=WORKFLOW_TYPE,
+        target=[researcher.agent_id, analyst.agent_id, writer.agent_id],
+        knobs={"graph": graph.to_dict()},
+    )
+
+    # --- 5. Send the brief and wait for the pipeline to terminate ---
+    print("=== Sequential pipeline: research -> analysis -> briefing ===\n")
+    await channel.send("Topic: the current state of quantum computing.")
+
+    close_env = await intake.wait_for_channel_event(
+        channel_id=channel.channel_id,
+        predicate=lambda e: e.event_type == EV_CHANNEL_CLOSED,
+        timeout=180.0,
+    )
+
+    # --- 6. Replay the transcript from the hub's write-ahead log ---
+    names = {
+        intake.agent_id: "intake",
+        researcher.agent_id: "researcher",
+        analyst.agent_id: "analyst",
+        writer.agent_id: "writer",
+    }
+    for env in await hub.read_wal(channel.channel_id):
+        speaker = names.get(env.sender_id, env.sender_id[:8])
+        if env.event_type == EV_TEXT:
+            print(f"{speaker:>12}: {env.event_data['text']}")
+        elif env.event_type == EV_PACKET and env.event_data.get("body"):
+            print(f"{speaker:>12}: {env.event_data['body']}")
+
+    print(f"\n=== Pipeline closed: reason={close_env.event_data.get('reason')!r} ===")
+
+    await hub.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

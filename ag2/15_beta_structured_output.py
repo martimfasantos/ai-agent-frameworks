@@ -3,8 +3,8 @@ import os
 
 from pydantic import BaseModel
 
-from autogen.beta import Agent
-from autogen.beta.config import OpenAIConfig
+from ag2 import Agent
+from ag2.config import OpenAIConfig
 
 from settings import settings
 
@@ -12,12 +12,12 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 
 """
 -------------------------------------------------------
-In this example, we explore AG2's Beta Agent with the following features:
+In this example, we explore AG2's Agent with the following features:
 - Structured output using response_schema with Pydantic models
-- Typed responses from the beta Agent
+- Parsing the raw reply body with model_validate_json
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/release-roadmap/
+https://docs.ag2.ai/latest/docs/beta/structured_output/
 -------------------------------------------------------
 """
 

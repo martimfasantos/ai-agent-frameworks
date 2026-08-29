@@ -1,9 +1,9 @@
 import asyncio
 import os
 
-from autogen.beta import Agent, Middleware
-from autogen.beta.middleware import BaseMiddleware
-from autogen.beta.config import OpenAIConfig
+from ag2 import Agent, Middleware
+from ag2.middleware import BaseMiddleware
+from ag2.config import OpenAIConfig
 
 from settings import settings
 
@@ -11,30 +11,34 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 
 """
 -------------------------------------------------------
-In this example, we explore AG2's Beta Middleware with the following features:
+In this example, we explore AG2's Middleware with the following features:
 - BaseMiddleware class for intercepting agent LLM calls
 - on_llm_call hook to log, transform, or gate model requests
 - on_turn hook to intercept full agent turns
 - Composing multiple middlewares on a single agent
 
-AG2 v0.13 introduces Middleware, a powerful mechanism to intercept
-and modify agent behavior without changing agent code. Middlewares
-can log, filter, transform, retry, or gate agent interactions.
+Middleware intercepts and modifies agent behavior without changing
+agent code: log, filter, transform, retry, or gate interactions.
+AG2 also ships builtins (CallTracerMiddleware, RetryMiddleware,
+TokenLimiter, MetricsMiddleware) you can use instead of rolling
+your own.
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/beta/middleware
+https://docs.ag2.ai/latest/docs/beta/middleware/
 -------------------------------------------------------
 """
 
 
-# --- 1. A logging middleware that tracks LLM calls ---
-class LoggingMiddleware(BaseMiddleware):
+# --- 1. A tracing middleware that logs LLM calls ---
+# Named CallTracer, not Logging, so it does not shadow the builtin
+# ag2.middleware.LoggingMiddleware.
+class CallTracerMiddleware(BaseMiddleware):
     """Logs every LLM call passing through the agent."""
 
     async def on_llm_call(self, call_next, events, context):
-        print("  [LoggingMiddleware] LLM call intercepted")
+        print("  [CallTracerMiddleware] LLM call intercepted")
         response = await call_next(events, context)
-        print("  [LoggingMiddleware] LLM responded")
+        print("  [CallTracerMiddleware] LLM responded")
         return response
 
 
@@ -58,7 +62,7 @@ async def main() -> None:
         prompt="You are a helpful assistant. Be concise (1-2 sentences max).",
         config=OpenAIConfig(model=settings.OPENAI_MODEL_NAME),
         middleware=[
-            Middleware(LoggingMiddleware),
+            Middleware(CallTracerMiddleware),
             Middleware(TimingMiddleware),
         ],
     )

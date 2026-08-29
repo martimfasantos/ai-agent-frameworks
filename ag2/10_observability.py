@@ -1,9 +1,11 @@
+import asyncio
+import json
 import os
-import sqlite3
-import tempfile
+from collections import Counter
 
-import autogen.runtime_logging as runtime_logging
-from autogen import ConversableAgent, LLMConfig
+from ag2 import Agent, MemoryStream, tool
+from ag2.config import OpenAIConfig
+from ag2.events import BaseEvent, ToolCallEvent, UsageEvent
 
 from settings import settings
 
@@ -12,112 +14,83 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 """
 -------------------------------------------------------
 In this example, we explore AG2 with the following features:
-- Runtime logging to SQLite for observability
-- Capturing chat completions, agent events, and metadata
-- Querying logged data for analysis after execution
+- MemoryStream.subscribe() to capture every event as it happens
+- stream.where(...) to subscribe to one event type only
+- Persisting the event log to disk for post-hoc analysis
 
-AG2 provides built-in runtime logging that records agent
-interactions, LLM calls, and events to a SQLite database.
-This enables post-hoc analysis, debugging, and monitoring
-of agent behavior without modifying agent code.
+AG2 1.0 removed autogen.runtime_logging and its SQLite schema.
+Observability is now stream-based: every agent action lands on the
+stream as a typed event, and subscribers decide what to record.
+Here we mirror the old workflow — capture a session, write it to a
+file, then query it afterwards for event counts and token usage.
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/observability/logging_events/
+https://github.com/ag2ai/ag2/blob/v1.0.1/website/docs/user-guide/advanced/stream.mdx
 -------------------------------------------------------
 """
 
-# --- 1. Configure LLM ---
-llm_config = LLMConfig({"model": settings.OPENAI_MODEL_NAME})
+LOG_PATH = "res/ag2_event_log.jsonl"
 
-# --- 2. Set up runtime logging ---
-db_path = os.path.join(tempfile.gettempdir(), "ag2_logging_demo.db")
-if os.path.exists(db_path):
-    os.remove(db_path)
 
-print("=== Observability: Runtime Logging ===\n")
-session_id = runtime_logging.start(
-    logger_type="sqlite",
-    config={"dbname": db_path},
-)
-print(f"Logging session started: {session_id}")
-print(f"Database: {db_path}\n")
+@tool
+def get_distance(city_a: str, city_b: str) -> str:
+    """Get the great-circle distance between two cities."""
+    return f"{city_a} to {city_b}: 2,780 km"
 
-# --- 3. Create agents ---
-assistant = ConversableAgent(
-    name="assistant",
-    system_message=(
-        "You are a helpful assistant. Answer questions concisely in 1-2 sentences."
-    ),
-    llm_config=llm_config,
-    human_input_mode="NEVER",
-)
 
-user = ConversableAgent(
-    name="user",
-    human_input_mode="NEVER",
-    llm_config=False,
-    is_termination_msg=lambda x: True,
-)
+async def main() -> None:
+    os.makedirs("res", exist_ok=True)
 
-# --- 4. Run a conversation (logged automatically) ---
-print("--- Running conversation 1 ---")
-user.initiate_chat(
-    assistant,
-    message="What is the speed of light?",
-    max_turns=1,
-)
+    # --- 1. Create a stream and subscribe to everything on it ---
+    stream = MemoryStream()
+    log: list[BaseEvent] = []
 
-print("\n--- Running conversation 2 ---")
-user.initiate_chat(
-    assistant,
-    message="What is the largest ocean on Earth?",
-    max_turns=1,
-)
+    @stream.subscribe()
+    async def record(event: BaseEvent) -> None:
+        log.append(event)
 
-# --- 5. Stop logging ---
-runtime_logging.stop()
-print("\nLogging session stopped.")
+    # --- 2. Subscribe to one event type only, for live tracing ---
+    @stream.where(ToolCallEvent).subscribe()
+    async def trace_tools(event: ToolCallEvent) -> None:
+        print(f"  [trace] tool call: {event.name}({event.arguments})")
 
-# --- 6. Analyze the logged data ---
-print("\n=== Log Analysis ===\n")
+    agent = Agent(
+        "assistant",
+        prompt="You are a helpful assistant. Answer in one sentence.",
+        config=OpenAIConfig(model=settings.OPENAI_MODEL_NAME),
+        tools=[get_distance],
+    )
 
-conn = sqlite3.connect(db_path)
-cursor = conn.cursor()
+    # --- 3. Run two turns on the same observed stream ---
+    print("=== Session: two turns on one observed stream ===\n")
+    reply = await agent.ask("What is the speed of light?", stream=stream)
+    print(f"Turn 1: {reply.body}")
 
-# List all tables and their row counts
-tables = cursor.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+    reply2 = await agent.ask(
+        "How far is Lisbon from Reykjavik? Use the tool.", stream=stream
+    )
+    print(f"Turn 2: {reply2.body}")
 
-for (table_name,) in tables:
-    count = cursor.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
-    if count > 0:
-        print(f"  {table_name}: {count} record(s)")
+    # --- 4. Persist the captured event log ---
+    with open(LOG_PATH, "w", encoding="utf-8") as handle:
+        for event in log:
+            handle.write(json.dumps(event.to_dict(), default=str) + "\n")
+    print(f"\nWrote {len(log)} events to {LOG_PATH}")
 
-# Show chat completions
-print("\n--- Chat Completions ---")
-completions = cursor.execute(
-    "SELECT id, source_name, start_time, end_time FROM chat_completions"
-).fetchall()
-for comp_id, source, start, end in completions:
-    print(f"  [{comp_id}] Agent: {source} | Start: {start} | End: {end}")
+    # --- 5. Query the captured session ---
+    print("\n=== Event counts ===")
+    for name, count in Counter(type(e).__name__ for e in log).most_common():
+        print(f"  {name}: {count}")
 
-# Show registered agents
-print("\n--- Registered Agents ---")
-agents = cursor.execute("SELECT name, class FROM agents").fetchall()
-for name, cls in agents:
-    print(f"  {name} ({cls})")
+    print("\n=== Token usage ===")
+    totals: Counter[str] = Counter()
+    for event in log:
+        if isinstance(event, UsageEvent):
+            totals["prompt"] += event.usage.prompt_tokens or 0
+            totals["completion"] += event.usage.completion_tokens or 0
+    print(f"  prompt tokens:     {totals['prompt']}")
+    print(f"  completion tokens: {totals['completion']}")
 
-# Show events
-print("\n--- Events ---")
-events = cursor.execute("SELECT source_name, event_name FROM events").fetchall()
-for source, event in events:
-    preview = event[:80] + "..." if len(event) > 80 else event
-    print(f"  [{source or 'system'}] {preview}")
 
-conn.close()
-
-# --- 7. Clean up ---
-os.remove(db_path)
-print(f"\n=== Observability Demo Complete ===")
-print(
-    f"Session {session_id} logged {len(completions)} completions and {len(events)} events."
-)
+if __name__ == "__main__":
+    asyncio.run(main())

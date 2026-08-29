@@ -1,8 +1,10 @@
+import asyncio
 import os
-import tempfile
 
-from autogen import ConversableAgent, LLMConfig
-from autogen.coding import LocalCommandLineCodeExecutor
+from ag2 import Agent
+from ag2.config import OpenAIConfig
+from ag2.events import ToolCallEvent, ToolResultEvent
+from ag2.tools import LocalEnvironment, SandboxCodeTool
 
 from settings import settings
 
@@ -11,67 +13,68 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 """
 -------------------------------------------------------
 In this example, we explore AG2 with the following features:
-- Code execution using LocalCommandLineCodeExecutor
-- Code writer agent and code executor agent pattern
-- Automatic extraction and execution of code blocks
+- SandboxCodeTool: code execution exposed to the agent as a tool
+- LocalEnvironment as the execution backend (no Docker needed)
+- State persisting across calls inside one environment instance
 
-AG2 agents can generate code and execute it locally.
-A code writer agent produces Python code blocks, and a
-code executor agent runs them using a command-line executor,
-returning the output for further conversation.
+AG2 1.0 replaces the classic code-executor agent pair with a single
+tool. SandboxCodeTool gives the model a run_code(code, language)
+function and the CodeEnvironment decides where it runs — here a
+local subprocess in res/sandbox. Because one environment backs every
+call, files written by one snippet are visible to the next.
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/advanced-concepts/code-execution/
+https://github.com/ag2ai/ag2/blob/v1.0.1/website/docs/user-guide/tools/code_execution.mdx
 -------------------------------------------------------
 """
 
-# --- 1. Configure LLM ---
-llm_config = LLMConfig({"model": settings.OPENAI_MODEL_NAME})
 
-# --- 2. Create a temporary directory for code execution ---
-temp_dir = tempfile.TemporaryDirectory()
+async def main() -> None:
+    # --- 1. Create a working directory for the sandbox ---
+    os.makedirs("res/sandbox", exist_ok=True)
 
-# --- 3. Create the code executor ---
-executor = LocalCommandLineCodeExecutor(
-    timeout=30,
-    work_dir=temp_dir.name,
-)
+    # --- 2. Build the code execution tool over a local environment ---
+    # LocalEnvironment runs code as a subprocess on this host: fast and
+    # dependency-free, but with no isolation. Swap in DockerEnvironment or
+    # DaytonaEnvironment when the code cannot be trusted.
+    environment = LocalEnvironment("res/sandbox", timeout=30)
+    code_tool = SandboxCodeTool(environment, languages=("python",))
 
-# --- 4. Create the code executor agent ---
-code_executor = ConversableAgent(
-    name="code_executor",
-    llm_config=False,
-    code_execution_config={"executor": executor},
-    human_input_mode="NEVER",
-    is_termination_msg=lambda x: "TERMINATE" in (x.get("content", "") or ""),
-)
+    agent = Agent(
+        "analyst",
+        prompt=(
+            "You are a Python analyst. Always compute answers by calling "
+            "run_code rather than reasoning them out. Report the printed "
+            "result in one sentence."
+        ),
+        config=OpenAIConfig(model=settings.OPENAI_MODEL_NAME),
+        tools=[code_tool],
+    )
 
-# --- 5. Create the code writer agent ---
-code_writer = ConversableAgent(
-    name="code_writer",
-    system_message=(
-        "You are a helpful coding assistant. Solve tasks using Python code. "
-        "Always put code in a ```python code block. "
-        "Do not suggest incomplete code. Do not use input(). "
-        "Check the execution result and fix errors if any. "
-        "When the task is done, reply with TERMINATE."
-    ),
-    llm_config=llm_config,
-    code_execution_config=False,
-    human_input_mode="NEVER",
-)
+    # --- 3. First task: compute and persist to a file ---
+    print("=== Task 1: compute the first 10 Fibonacci numbers ===\n")
+    reply = await agent.ask(
+        "Compute the first 10 Fibonacci numbers, print them, and also write "
+        "them to fib.txt in the working directory."
+    )
+    print(f"Agent: {reply.body}")
 
-# --- 6. Run a coding task ---
-print("=== Code Execution: Fibonacci Calculator ===\n")
+    # --- 4. Second task: proves the sandbox filesystem persisted ---
+    print("\n=== Task 2: read the file back from the same sandbox ===\n")
+    reply2 = await reply.ask("Read fib.txt back and print its contents.")
+    print(f"Agent: {reply2.body}")
 
-result = code_executor.initiate_chat(
-    code_writer,
-    message="Write Python code to calculate and print the first 10 Fibonacci numbers.",
-    max_turns=3,
-)
+    # --- 5. Show the code the model actually ran ---
+    print("\n=== Executed snippets ===")
+    for event in await reply2.context.stream.history.get_events():
+        if isinstance(event, ToolCallEvent):
+            print(f"  -> {event.name}: {event.arguments[:120]}")
+        elif isinstance(event, ToolResultEvent):
+            output = " ".join(str(part.content) for part in event.result.parts)
+            print(f"  <- {output.strip()[:200]}")
 
-print("\n=== Code Execution Complete ===")
-print(f"Chat turns: {len(result.chat_history)}")
+    print(f"\nSandbox files: {sorted(os.listdir('res/sandbox'))}")
 
-# --- 7. Clean up ---
-temp_dir.cleanup()
+
+if __name__ == "__main__":
+    asyncio.run(main())

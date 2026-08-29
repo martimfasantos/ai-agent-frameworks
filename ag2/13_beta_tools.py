@@ -1,8 +1,8 @@
 import asyncio
 import os
 
-from autogen.beta import Agent
-from autogen.beta.config import OpenAIConfig
+from ag2 import Agent
+from ag2.config import OpenAIConfig
 
 from settings import settings
 
@@ -10,16 +10,16 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 
 """
 -------------------------------------------------------
-In this example, we explore AG2's Beta Agent with the following features:
-- Tool functions on the beta Agent
+In this example, we explore AG2's Agent with the following features:
+- Tool functions passed as plain callables
 - Event history showing tool call/result lifecycle
 
-The beta Agent supports tools as plain functions passed via
-the tools= parameter. The event history shows the full
+Agent accepts tools as plain functions via the tools= parameter,
+with no decorator required. The event history shows the full
 tool-calling loop.
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/release-roadmap/
+https://github.com/ag2ai/ag2/blob/v1.0.1/website/docs/user-guide/tools/tools.mdx
 -------------------------------------------------------
 """
 

@@ -1,6 +1,8 @@
+import asyncio
 import os
 
-from autogen import ConversableAgent, LLMConfig
+from ag2 import Agent
+from ag2.config import OpenAIConfig
 
 from settings import settings
 
@@ -9,40 +11,45 @@ os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
 """
 -------------------------------------------------------
 In this example, we explore AG2 with the following features:
-- Creating a simple ConversableAgent
-- Using LLMConfig with the new dict-based configuration
-- Running a single-turn conversation with run() and process()
+- Creating an Agent with a typed OpenAIConfig
+- The async-only ask() entry point and AgentReply.body
+- Continuing the same conversation with AgentReply.ask()
 
-AG2 (formerly AutoGen) is a multi-agent framework where
-ConversableAgent is the core building block. This example
-shows the simplest possible agent interaction.
+Agent is the single core primitive in AG2 1.0. Every turn is
+async: agent.ask() starts a conversation and returns an
+AgentReply, and reply.ask() continues that exact conversation
+with its history intact.
 
 For more details, visit:
-https://docs.ag2.ai/latest/docs/user-guide/basic-concepts/conversable-agent/
+https://docs.ag2.ai/latest/docs/beta/agents/
 -------------------------------------------------------
 """
 
-# --- 1. Configure the LLM ---
-llm_config = LLMConfig({"model": settings.OPENAI_MODEL_NAME})
 
-# --- 2. Create a simple agent ---
-agent = ConversableAgent(
-    name="assistant",
-    system_message="You are a helpful assistant. Be concise, reply in 1-2 sentences.",
-    llm_config=llm_config,
-    human_input_mode="NEVER",
-)
+async def main() -> None:
+    # --- 1. Create the agent ---
+    agent = Agent(
+        "assistant",
+        prompt="You are a helpful assistant. Be concise, reply in 1-2 sentences.",
+        config=OpenAIConfig(model=settings.OPENAI_MODEL_NAME),
+    )
 
-# --- 3. Run the agent and print the conversation ---
-result = agent.run(
-    message="Where does the phrase 'hello world' come from?",
-    max_turns=1,
-    user_input=False,
-)
+    # --- 2. Start a conversation ---
+    print("=== Turn 1: new conversation ===")
+    reply = await agent.ask("Where does the phrase 'hello world' come from?")
+    print(f"Response: {reply.body}")
 
-# process() prints the conversation to stdout
-result.process()
+    # --- 3. Continue the SAME conversation (history is carried over) ---
+    print("\n=== Turn 2: continuation via reply.ask() ===")
+    follow_up = await reply.ask("Now say that in five words or fewer.")
+    print(f"Response: {follow_up.body}")
 
-# --- 4. Print the summary ---
-print("\n=== Summary ===")
-print(result.summary)
+    # --- 4. Inspect the conversation history recorded on the stream ---
+    events = await follow_up.context.stream.history.get_events()
+    print(f"\n=== Conversation history: {len(events)} event(s) ===")
+    for event in events:
+        print(f"  - {type(event).__name__}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
