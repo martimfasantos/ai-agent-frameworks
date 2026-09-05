@@ -24,6 +24,7 @@ jobs:
           - autogen
           - claude-agents-sdk
           - crewai
+          - deepagents
           - google-adk
           - langchain
           - langgraph

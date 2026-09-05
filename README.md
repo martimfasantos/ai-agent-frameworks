@@ -74,7 +74,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/agno.svg" alt="Agno" width="68" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>2.6.18</code></td>
+      <td><code>2.8.7</code></td>
       <td>
           <a href="https://docs.agno.com/introduction">
             <picture>
@@ -159,7 +159,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/crewai.svg" alt="CrewAI" width="72">
         </picture>
       </td>
-      <td><code>1.14.7</code></td>
+      <td><code>1.15.11</code></td>
       <td>
           <a href="https://docs.crewai.com/">
             <picture>
@@ -171,6 +171,35 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
       </td>
       <td>
           <a href="https://github.com/crewAIInc/crewAI">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="res/github-icon-dark.svg">
+              <source media="(prefers-color-scheme: light)" srcset="res/github-icon.svg">
+              <img src="res/github-icon.svg" alt="GitHub" width="20">
+            </picture>
+          </a>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: middle;">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="res/langchain-dark.svg">
+          <source media="(prefers-color-scheme: light)" srcset="res/langchain.svg">
+          <img src="res/langchain.svg" alt="Deep Agents" width="30" style="vertical-align: middle;">
+        </picture>
+    <strong style="vertical-align: middle; font-size: 1.2em;">Deep Agents</strong>
+      </td>
+      <td><code>0.7.4</code></td>
+      <td>
+          <a href="https://docs.langchain.com/oss/python/deepagents/overview">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="res/book-open-dark.svg">
+              <source media="(prefers-color-scheme: light)" srcset="res/book-open.svg">
+              <img src="res/book-open.svg" alt="Docs" width="20">
+            </picture>
+          </a>
+      </td>
+      <td>
+          <a href="https://github.com/langchain-ai/deepagents">
             <picture>
               <source media="(prefers-color-scheme: dark)" srcset="res/github-icon-dark.svg">
               <source media="(prefers-color-scheme: light)" srcset="res/github-icon.svg">
@@ -216,7 +245,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/langchain.svg" alt="LangChain" width="120" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>1.3.10</code></td>
+      <td><code>1.3.14</code></td>
       <td>
           <a href="https://docs.langchain.com/oss/python/langchain/">
             <picture>
@@ -249,7 +278,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
           <img src="res/langgraph-text.svg" alt="LangGraph" width="100" style="vertical-align: middle;">
         </picture>
       </td>
-      <td><code>1.2.6</code></td>
+      <td><code>1.2.10</code></td>
       <td>
           <a href="https://langchain-ai.github.io/langgraph/">
             <picture>
@@ -340,7 +369,7 @@ This repository provides a comprehensive, hands-on comparison of modern AI agent
         </picture>
     <strong style="vertical-align: middle; font-size: 1.2em;">OpenAI Agents SDK</strong>
       </td>
-      <td><code>0.17.6</code></td>
+      <td><code>0.19.4</code></td>
       <td>
           <a href="https://openai.github.io/openai-agents-python/">
             <picture>
@@ -460,6 +489,7 @@ The repository is organized by framework, with each top-level folder containing 
 - `autogen/`
 - `claude-agents-sdk/`
 - `crewai/`
+- `deepagents/`
 - `google-adk/`
 - `langchain/`
 - `langgraph/`

@@ -2,6 +2,7 @@
 
 - Repo: https://github.com/langchain-ai/langchain
 - Documentation: https://docs.langchain.com/oss/python/langchain/
+- Version: **1.3.14**
 
 ## LangChain Examples
 
@@ -58,7 +59,7 @@ uv run python 00_hello_world.py
 | 07 | `07_context_engineering.py` | Dynamic prompts, tool filtering, message injection |
 | 08 | `08_middleware.py` | `@before_model`, `@after_model`, `@dynamic_prompt` |
 | 09 | `09_guardrails.py` | `@before_agent`, `@after_agent` content filtering |
-| 10 | `10_human_in_the_loop.py` | `HumanInTheLoopMiddleware`, interrupt/resume |
+| 10 | `10_human_in_the_loop.py` | `HumanInTheLoopMiddleware`, interrupt/resume, `InterruptOnConfig(when=)` |
 | 11 | `11_long_term_memory.py` | `InMemoryStore`, store read/write from tools |
 | 12 | `12_retrieval_rag.py` | Agentic RAG with retrieval tools |
 | 13 | `13_mcp.py` | MCP integration with `MultiServerMCPClient` and FastMCP |
@@ -68,4 +69,7 @@ uv run python 00_hello_world.py
 | 17 | `17_multi_agent_skills.py` | Skills pattern with progressive skill disclosure |
 | 18 | `18_observability.py` | LangSmith tracing, metadata, selective tracing |
 | 19 | `19_dynamic_tool_registration.py` | Dynamic tool injection via middleware |
-| 20 | `20_stream_events_v3.py` | v3 event streaming with tool-started/finished and text-delta events |
+| 20 | `20_stream_events_v3.py` | v3 event streaming: typed projections (`stream.messages`, `message.text`, `stream.output`, `stream.subgraphs`) + raw events |
+| 21 | `21_tool_error_handling.py` | `ToolErrorMiddleware(on_error=)` composed outside `ToolRetryMiddleware` |
+| 22 | `22_builtin_middleware.py` | `SummarizationMiddleware`, `ContextEditingMiddleware`, model/tool call limits |
+| 23 | `23_structured_output_strategies.py` | `ToolStrategy` vs `ProviderStrategy`, union schemas, `handle_errors` |

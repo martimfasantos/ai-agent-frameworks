@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 
 from agno.agent import Agent
-from agno.approval import ApprovalType
 from agno.approval.decorator import approval
 from agno.models.openai import OpenAIChat
 from agno.tools import tool

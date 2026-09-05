@@ -2,6 +2,7 @@
 
 - Repo: https://github.com/langchain-ai/langgraph
 - Documentation: https://docs.langchain.com/oss/python/langgraph/overview
+- Version: **1.2.10**
 
 LangGraph is a framework from LangChain for building stateful, multi-actor agents as graphs. Nodes are functions, edges define control flow, and built-in persistence turns any graph into a conversational agent with memory, human-in-the-loop approval, time-travel debugging, and streaming — all with a small, composable API.
 
@@ -51,7 +52,7 @@ uv run python 00_hello_world.py
 | `10_persistence.py` | Short-Term Memory | `InMemorySaver`, `thread_id`, multi-turn |
 | `11_message_management.py` | Message Management | `trim_messages`, `RemoveMessage`, summary pattern |
 | `12_long_term_memory.py` | Long-Term Memory Store | `InMemoryStore`, `get_store()`, `store.put()`, `store.search()` |
-| `13_time_travel.py` | Replay & Fork | `get_state_history()`, `update_state()` |
+| `13_time_travel.py` | Replay & Fork | `get_state_history()`, re-invoking from a past `checkpoint_id` |
 | `14_human_in_the_loop.py` | Human-in-the-Loop | `interrupt()`, `Command(resume=...)` |
 | `15_retry_policies.py` | Retry Policies | `RetryPolicy`, `add_node(..., retry_policy=...)` |
 | `16_map_reduce.py` | Map-Reduce (Fan-out) | `Send`, parallel workers, aggregation |
@@ -61,12 +62,16 @@ uv run python 00_hello_world.py
 | `20_evaluator_optimizer.py` | Evaluator-Optimizer Loop | Conditional looping, structured evaluation |
 | `21_functional_api.py` | Functional API | `@entrypoint`, `@task`, `entrypoint.final`, futures |
 | `22_error_handling_and_caching.py` | Error Handling & Caching | Node-level `error_handler`, `CachePolicy` with TTL |
+| `23_runtime_context.py` | Runtime Context | `context_schema=`, `Runtime[Ctx]`, `runtime.context`/`.store`/`.stream_writer`/`.previous`, `invoke(context=...)` |
+| `24_overwrite_and_deferred_nodes.py` | Bypassing Reducers & Deferred Fan-in | `Overwrite`, `{"__overwrite__": ...}`, `InvalidUpdateError`, `add_node(..., defer=True)` |
+| `25_timeouts_and_durability.py` | Timeouts & Durability | `add_node(..., timeout=)`, `TimeoutPolicy`, `NodeTimeoutError`, `durability="sync"/"async"/"exit"` |
+| `26_event_streaming_v3.py` | Event Streaming (v3) | `stream_events(version="v3")`, `.messages`/`.values`/`.subgraphs`/`.output`/`.interrupts`, `transformers=` |
 
 ## Key dependencies
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `langgraph` | >=1.2.6 | Core graph framework |
+| `langgraph` | >=1.2.6 (locked 1.2.10) | Core graph framework |
 | `langchain` | >=1.3.10 | LangChain base library |
 | `langchain-openai` | >=1.2.2 | OpenAI model integration (`ChatOpenAI`) |
 | `pydantic` | >=2.12.5 | State validation and structured outputs |

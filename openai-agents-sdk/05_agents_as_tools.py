@@ -1,7 +1,7 @@
 import os
 import asyncio
 
-from agents import Agent, ItemHelpers, MessageOutputItem, Runner, trace
+from agents import Agent, ItemHelpers, MessageOutputItem, RunConfig, Runner, trace
 from settings import settings
 
 os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
@@ -81,8 +81,14 @@ async def main():
 
     # 4. Run the agents with tracing
     with trace("5_agents_as_tools"):
-        # 4.1 Run the orchestrator agent to get translations
-        orchestrator_result = await Runner.run(orchestrator_agent, msg)
+        # 4.1 Run the orchestrator agent to get translations.
+        #     Since 0.19.3, duplicate tool names only warn by default; "error" turns a
+        #     collision into a UserError instead. The three names here are distinct.
+        orchestrator_result = await Runner.run(
+            orchestrator_agent,
+            msg,
+            run_config=RunConfig(tool_name_collision_policy="error"),
+        )
 
         for item in orchestrator_result.new_items:
             if isinstance(item, MessageOutputItem):
