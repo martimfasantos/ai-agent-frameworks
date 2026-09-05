@@ -1,6 +1,6 @@
 # smolagents - Example Outputs
 
-All examples run with `smolagents==1.24.0` and `OpenAIModel` (`gpt-4o-mini`) as the model provider.
+All examples run with `smolagents==1.26.0` and `OpenAIModel` (`gpt-4o-mini`) as the model provider.
 
 > **Note:** LLM responses are non-deterministic. Your outputs will differ in wording but should follow the same structure and demonstrate the same features. smolagents produces Rich-formatted step logs showing code execution and tool calls — this is built-in framework behavior.
 
@@ -683,6 +683,256 @@ Running on local URL:  http://127.0.0.1:7860
 
 ---
 
+## 15_plan_customization_hitl.py
+
+```
+$ uv run python 15_plan_customization_hitl.py
+
+=== Plan Customization (Human-in-the-Loop) Demo ===
+step_callbacks registered as a dict: {PlanningStep: review_plan}
+
+--- Run 1 (reset=True, default): expected to be interrupted ---
+╭────────────────────────────────── New run ───────────────────────────────────╮
+│                                                                              │
+│ Which sales region had the highest revenue last quarter?                     │
+│                                                                              │
+╰─ OpenAIModel - gpt-4o-mini ──────────────────────────────────────────────────╯
+───────────────────────────────── Initial plan ─────────────────────────────────
+Here are the facts I know and the plan of action that I will follow to solve the
+task:
+...
+## 2. Plan
+1. Call the `list_regions()` function to retrieve the available sales regions.
+...
+
+==============================================================
+REVIEWER SEES PLAN #1
+==============================================================
+## 2. Plan
+1. Call the `list_regions()` function to retrieve the available sales regions.
+2. Collect the list of sales regions returned by the function.
+3. For each region in the list, call the `get_region_revenue(region)` function to retrieve the last-quarter revenue for that specific region.
+4. Store the revenue data for each region in an appropriate data structure (e.g., a list or dictionary).
+5. Analyze the stored revenue data to determine which region has the highest revenue by comparing the values.
+6. Call the `final_answer(answer)` function to provide the final answer, indicating the sales region with the highest revenue.
+==============================================================
+Reviewer decision: MODIFY  -> appended: Name only the single top region and state its revenue in EUR.
+Reviewer decision: PAUSE   -> agent.interrupt() called
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Step 1 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ─ Executing parsed code: ─────────────────────────────────────────────────────
+  regions = list_regions()
+  print("Available sales regions:", regions)
+ ──────────────────────────────────────────────────────────────────────────────
+Execution logs:
+Available sales regions: north, south, east, west
+
+Out: None
+[Step 1: Duration 1.24 seconds| Input tokens: 2,393 | Output tokens: 39]
+Agent interrupted.
+Run 1 stopped by the reviewer: Agent interrupted.
+
+--- Memory after the interrupt: 3 steps ---
+  1. TaskStep
+  2. PlanningStep
+  3. ActionStep
+
+Reviewer edit survived into memory: True
+
+--- Run 2 (reset=False): resume with memory preserved ---
+╭────────────────────────────────── New run ───────────────────────────────────╮
+│                                                                              │
+│ Which sales region had the highest revenue last quarter?                     │
+│                                                                              │
+╰─ OpenAIModel - gpt-4o-mini ──────────────────────────────────────────────────╯
+───────────────────────────────── Updated plan ─────────────────────────────────
+...
+### 1.2. Facts that we have learned
+- The available sales regions are: north, south, east, and west.
+...
+
+==============================================================
+REVIEWER SEES PLAN #2
+==============================================================
+## 2. Plan
+### 2.1. Retrieve the last-quarter revenue for the north region.
+### 2.2. Retrieve the last-quarter revenue for the south region.
+### 2.3. Retrieve the last-quarter revenue for the east region.
+### 2.4. Retrieve the last-quarter revenue for the west region.
+### 2.5. Compare all the retrieved revenues to identify the region with the highest revenue.
+### 2.6. Provide the final answer regarding which sales region had the highest revenue.
+==============================================================
+Reviewer decision: APPROVE -> letting the resumed run finish
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Step 1 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ─ Executing parsed code: ─────────────────────────────────────────────────────
+  north_revenue = get_region_revenue(region="north")
+  print("Revenue for north region:", north_revenue)
+ ──────────────────────────────────────────────────────────────────────────────
+Execution logs:
+Revenue for north region: north: EUR 1,200,000
+
+Out: None
+[Step 2: Duration 1.09 seconds| Input tokens: 5,212 | Output tokens: 81]
+...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Step 6 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ─ Executing parsed code: ─────────────────────────────────────────────────────
+  final_answer("east with revenue: EUR 1,450,000")
+ ──────────────────────────────────────────────────────────────────────────────
+Final answer: east with revenue: EUR 1,450,000
+[Step 7: Duration 0.95 seconds| Input tokens: 21,552 | Output tokens: 436]
+
+Final answer: east with revenue: EUR 1,450,000
+
+--- Summary ---
+Plans reviewed: 2 (edited: True)
+Steps in memory: 3 after interrupt -> 11 after resume
+Memory preserved across the resume: True
+```
+
+> Every other example passes `step_callbacks` as a LIST, which smolagents
+> registers for `ActionStep` only. The DICT form `{PlanningStep: review_plan}`
+> targets the planning step specifically. The callback fires *before* the plan is
+> appended to memory, so mutating `step.plan` changes the plan the agent then
+> executes — visible in the final answer, which follows the reviewer's
+> "name only the single top region and state its revenue in EUR" requirement.
+> `agent.interrupt()` is checked at the top of the agent loop, so the in-flight
+> step 1 completes and the run then raises `AgentError("Agent interrupted.")`.
+> `run(task, reset=False)` resumes: memory grows 3 -> 11 steps instead of
+> restarting, and the resumed plan is an *update* that already knows the region
+> names learned before the pause.
+
+**Verdict:** PASS - Dict-form `step_callbacks={PlanningStep: ...}` fires, plan edit lands in memory and shapes the final answer, `interrupt()` raises out of run 1, `reset=False` resumes with all prior steps intact
+
+---
+
+## 16_run_result_and_replay.py
+
+```
+$ uv run python 16_run_result_and_replay.py
+
+=== RunResult & Replay Demo ===
+
+╭───────────────────────── New run - support_analyst ──────────────────────────╮
+│                                                                              │
+│ How many open tickets do the billing and mobile teams have in total? Answer   │
+│ in one short sentence.                                                       │
+│                                                                              │
+╰─ OpenAIModel - gpt-4o-mini ──────────────────────────────────────────────────╯
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Step 1 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ─ Executing parsed code: ─────────────────────────────────────────────────────
+  billing_tickets = get_open_tickets(team="billing")
+  print("Open tickets for billing team:", billing_tickets)
+ ──────────────────────────────────────────────────────────────────────────────
+Execution logs:
+Open tickets for billing team: 42
+
+Out: None
+[Step 1: Duration 2.15 seconds| Input tokens: 2,061 | Output tokens: 98]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Step 2 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ─ Executing parsed code: ─────────────────────────────────────────────────────
+  mobile_tickets = get_open_tickets(team="mobile")
+  print("Open tickets for mobile team:", mobile_tickets)
+ ──────────────────────────────────────────────────────────────────────────────
+Execution logs:
+Open tickets for mobile team: 8
+
+Out: None
+[Step 2: Duration 1.25 seconds| Input tokens: 4,310 | Output tokens: 161]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Step 3 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ─ Executing parsed code: ─────────────────────────────────────────────────────
+  total_tickets = billing_tickets + mobile_tickets
+  final_answer(f"The total number of open tickets is {total_tickets}.")
+ ──────────────────────────────────────────────────────────────────────────────
+Final answer: The total number of open tickets is 50.
+[Step 3: Duration 1.49 seconds| Input tokens: 6,712 | Output tokens: 233]
+
+--- RunResult (RunResult) ---
+  output : The total number of open tickets is 50.
+  state  : success
+  steps  : 4 recorded
+  tokens : input=6712 output=233 total=6945
+  timing : 4.90s (start=1785945795, end=1785945800)
+
+--- Per-step breakdown (no hand-counting needed) ---
+  task step     : How many open tickets do the billing and mobile teams have in total? Answer in one short sentence.
+  action step 1 : 2.15s, 2159 tokens
+  action step 2 : 1.25s, 2312 tokens
+  action step 3 : 1.49s, 2474 tokens [final answer]
+
+--- RunResult.dict() ---
+  keys: ['output', 'state', 'steps', 'token_usage', 'timing']
+  token_usage: {'input_tokens': 6712, 'output_tokens': 233, 'total_tokens': 6945}
+  serialized size: 40664 chars of JSON
+
+Everything above came from one RunResult; 12_callbacks_observability.py
+assembles a smaller version of it by hand from a step callback.
+
+--- agent.replay(): every step re-printed from agent.memory ---
+(replay() dumps the full system prompt first, then each step's output)
+[17:03:20] Replaying the agent's steps:                            memory.py:256
+System prompt ──────────────────────────────────────────────────────────────────
+You are an expert assistant who can solve any task using code blobs. You will be
+given a task to solve as best you can.
+...
+Make exactly one tool call per code block, print its result, and stop so you can
+observe it before deciding the next action.
+
+Now Begin!
+╭────────────────────────────────── New run ───────────────────────────────────╮
+│                                                                              │
+│ How many open tickets do the billing and mobile teams have in total? Answer   │
+│ in one short sentence.                                                       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Step 1 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Agent output: ──────────────────────────────────────────────────────────────────
+Thought: I will use the `get_open_tickets` function to retrieve the number of
+open support tickets for the billing team first.
+
+<code>
+billing_tickets = get_open_tickets(team="billing")
+print("Open tickets for billing team:", billing_tickets)
+</code>
+...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Step 3 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Agent output: ──────────────────────────────────────────────────────────────────
+Thought: I now have the number of open tickets for both teams: 42 for the
+billing team and 8 for the mobile team. I will sum these numbers.
+
+<code>
+total_tickets = billing_tickets + mobile_tickets
+final_answer(f"The total number of open tickets is {total_tickets}.")
+</code>
+
+--- agent.visualize(): agent structure ---
+CodeAgent | gpt-4o-mini
+├── ✅ Authorized imports: []
+└── 🛠️ Tools:
+    ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    ┃ Name             ┃ Description               ┃ Arguments                 ┃
+    ┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+    │ get_open_tickets │ Get the number of open    │ team (`string`): The team │
+    │                  │ support tickets for a     │ name (one of: billing,    │
+    │                  │ team.                     │ platform, mobile).        │
+    │ final_answer     │ Provides a final answer   │ answer (`any`): The final │
+    │                  │ to the given problem.     │ answer to the problem     │
+    └──────────────────┴───────────────────────────┴───────────────────────────┘
+```
+
+> `return_full_result=True` swaps the plain answer for a `RunResult` carrying
+> `output`, `state`, `steps`, `token_usage` and `timing`. Compare with
+> `12_callbacks_observability.py`, which accumulates its trace by hand from a
+> step callback and reports no tokens and no timing at all — those come free
+> here. `RunResult.dict()` is plain-JSON serializable (40,664 chars for this
+> 3-step run), so a run record can be logged or persisted as-is. `agent.replay()`
+> re-prints the run from `agent.memory`, starting with the full system prompt
+> (truncated above with `...`); `agent.visualize()` prints the tool tree.
+
+**Verdict:** PASS - `RunResult` returns output/state/steps/token_usage/timing, per-step metrics read directly off `result.steps`, `dict()` serializes to JSON, `replay()` and `visualize()` both render
+
+---
+
 ## Summary
 
 | # | File | Status | Notes |
@@ -702,5 +952,7 @@ Running on local URL:  http://127.0.0.1:7860
 | 12 | `12_callbacks_observability.py` | PASS | Post-run execution trace with step/tool/error counts |
 | 13 | `13_advanced_patterns.py` | PASS | Custom instructions, final answer checks, step inspection |
 | 14 | `14_gradio_ui.py` | PASS | GradioUI web chat interface with file uploads |
+| 15 | `15_plan_customization_hitl.py` | PASS | Dict-form `step_callbacks`, plan editing, `interrupt()`, `reset=False` resume |
+| 16 | `16_run_result_and_replay.py` | PASS | `RunResult` metrics, `dict()`, `replay()`, `visualize()` |
 
-**15/15 examples pass.**
+**17/17 examples pass.**

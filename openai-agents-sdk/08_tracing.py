@@ -2,7 +2,7 @@ import os
 import asyncio
 from pydantic import BaseModel
 
-from agents import Agent, Runner, trace, function_tool
+from agents import Agent, RunConfig, Runner, trace, function_tool
 from settings import settings
 
 os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
@@ -53,9 +53,16 @@ async def main():
         # Because the two calls to `Runner.run` are wrapped in a with `trace()`, 
         # the individual runs will be part of the overall trace rather than creating two traces.
         first_result = await Runner.run(agent, "Tell me a joke")
-        second_result = await Runner.run(agent, f"Rate this joke: {first_result.final_output}")
+        # Since 0.18.3, the automatic per-task/per-turn spans can be switched off to
+        # keep a trace flat — the LLM spans are still recorded.
+        second_result = await Runner.run(
+            agent,
+            f"Rate this joke: {first_result.final_output}",
+            run_config=RunConfig(tracing={"include_task_and_turn_spans": False}),
+        )
         print(f"Joke: {first_result.final_output}")
         print(f"Rating: {second_result.final_output}")
+        print("(second run traced without task/turn spans)")
 
     """
     NOTE: Please check the `traces/` directory for the traces of this and the other examples.

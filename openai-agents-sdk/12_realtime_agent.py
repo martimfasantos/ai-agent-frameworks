@@ -3,6 +3,7 @@ import os
 from agents import function_tool
 from agents.realtime import RealtimeAgent, RealtimeRunner
 from agents.realtime.items import AssistantMessageItem
+from agents.realtime.openai_realtime import DEFAULT_REALTIME_MODEL
 from settings import settings
 
 os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY.get_secret_value()
@@ -60,9 +61,11 @@ def get_time(timezone: str) -> str:
 async def main():
     print("=== Realtime Agent Example ===\n")
 
-    # 2. Define a RealtimeAgent (similar to Agent, but for realtime sessions)
+    # 2. Define a RealtimeAgent (similar to Agent, but for realtime sessions).
+    #    With no model set, the SDK uses DEFAULT_REALTIME_MODEL, which became
+    #    gpt-realtime-2.1 in 0.18.0.
+    print(f"Default realtime model: {DEFAULT_REALTIME_MODEL}\n")
     agent = RealtimeAgent(
-        model="gpt-4o-mini-realtime-preview",
         name="Voice Assistant",
         instructions=(
             "You are a helpful voice assistant. Keep responses short and "
@@ -91,11 +94,12 @@ async def main():
         # 6. Stream events from the session
         #    The Realtime API produces audio by default. After the model calls
         #    a tool and generates a response, the transcript appears in the
-        #    history_updated event. We track agent_end events to know when
-        #    both the tool-call turn and response turn have completed.
-        print("Assistant: ", end="", flush=True)
+        #    history_updated event. The model often speaks once before calling
+        #    the tool, so we keep reading until it answers after the tool result.
         agent_ends = 0
-        responded = False
+        printed: set[str] = set()
+        tool_finished = False
+        answered_after_tool = False
         async for event in session:
             if event.type == "audio":
                 # In a real app, you'd forward audio bytes to speakers
@@ -104,6 +108,7 @@ async def main():
                 print(f"[calling {event.tool.name}({event.arguments})]", flush=True)
             elif event.type == "tool_end":
                 print(f"[tool result: {event.output}]", flush=True)
+                tool_finished = True
             elif event.type == "history_updated":
                 # The transcript is populated in history_updated (not history_added)
                 for item in event.history:
@@ -112,12 +117,13 @@ async def main():
                             transcript = getattr(content, "transcript", None)
                             text = getattr(content, "text", None)
                             value = transcript or text
-                            if value and not responded:
-                                print(value, flush=True)
-                                responded = True
+                            if value and value not in printed:
+                                printed.add(value)
+                                print(f"Assistant: {value}", flush=True)
+                                answered_after_tool = tool_finished
             elif event.type == "agent_end":
                 agent_ends += 1
-                if agent_ends >= 2 or responded:
+                if answered_after_tool or agent_ends >= 3:
                     break
             elif event.type == "error":
                 print(f"\nError: {event}")

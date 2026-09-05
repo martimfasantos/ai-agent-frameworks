@@ -4,7 +4,8 @@ version = "0.1.0"
 description = "CrewAI framework examples"
 requires-python = ">=3.12"
 dependencies = [
-    "crewai[tools]>=1.12.2",
+    "crewai-tools[mcp]>=1.15.11",
+    "crewai[tools]>=1.15.11",
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
 ]

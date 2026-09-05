@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Agno framework examples"
 requires-python = ">=3.12"
 dependencies = [
-    "agno>=2.5.0",
+    "agno>=2.8.2",
     "ddgs",
     "fastapi",
     "lancedb",

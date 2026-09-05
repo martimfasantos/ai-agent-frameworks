@@ -91,6 +91,8 @@ report_agent = LlmAgent(
 )
 
 # --- 4. Compose into a SequentialAgent pipeline ---
+# SequentialAgent emits a DeprecationWarning as of ADK 2.6.x in favor of
+# `Workflow`; see 21_workflow_graphs.py for the graph-based successor.
 research_pipeline = SequentialAgent(
     name="ResearchPipeline",
     sub_agents=[ResearchAgent(), analysis_agent, report_agent],

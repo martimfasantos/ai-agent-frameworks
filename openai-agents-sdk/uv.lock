@@ -312,18 +312,6 @@ wheels = [
 ]
 
 [[package]]
-name = "griffe"
-version = "1.15.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "colorama" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/0d/0c/3a471b6e31951dce2360477420d0a8d1e00dea6cf33b70f3e8c3ab6e28e1/griffe-1.15.0.tar.gz", hash = "sha256:7726e3afd6f298fbc3696e67958803e7ac843c1cfe59734b6251a40cdbfb5eea", size = 424112, upload-time = "2025-11-10T15:03:15.52Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/83/3b1d03d36f224edded98e9affd0467630fc09d766c0e56fb1498cbb04a9b/griffe-1.15.0-py3-none-any.whl", hash = "sha256:6f6762661949411031f5fcda9593f586e6ce8340f0ba88921a0f2ef7a81eb9a3", size = 150705, upload-time = "2025-11-10T15:03:13.549Z" },
-]
-
-[[package]]
 name = "griffelib"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -610,7 +598,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "2.43.0"
+version = "2.53.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -622,14 +610,14 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f3/fa/88d0c58a0c58df7e6758e66b99c5d028d5e0bb49f8812d7203940cd9dbf1/openai-2.43.0.tar.gz", hash = "sha256:e74d238200a26868977002190fb6631613480a93dfe0c9c982e77021ed60a017", size = 785369, upload-time = "2026-06-17T17:06:56.06Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ef/cf/36e3e7235fdf6d125c052acc0970924611b17a20a4fe580596faf4566a65/openai-2.53.0.tar.gz", hash = "sha256:baf5802ad08980e1d9d561e1b996e800c8bcd14af5847c6d0e7a5cc59e4d4116", size = 1099435, upload-time = "2026-08-03T21:42:01.664Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a3/d2/ba767f4bbb30776c03d40906a2d3afad716a165ffa1771fc23b8992f7920/openai-2.43.0-py3-none-any.whl", hash = "sha256:65a670b54fadf2268c9e1330133373c963eb779ee969e5cbad419ec2c21dce97", size = 1355077, upload-time = "2026-06-17T17:06:53.614Z" },
+    { url = "https://files.pythonhosted.org/packages/78/0f/cc6afea3542a5142c5d8fc8211c5e059a8375105d004a41dfa2c7948dbb0/openai-2.53.0-py3-none-any.whl", hash = "sha256:c694ffc747a3c4d1663ef2b07b811315a476164ee5efa3a993967349ebca7618", size = 1659829, upload-time = "2026-08-03T21:41:59.581Z" },
 ]
 
 [[package]]
 name = "openai-agents"
-version = "0.17.6"
+version = "0.19.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "griffelib" },
@@ -637,13 +625,12 @@ dependencies = [
     { name = "openai" },
     { name = "pydantic" },
     { name = "requests" },
-    { name = "types-requests" },
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fb/90/724f368d1f0656dc750a0b6d3ba06ad88efb293be8d43b08e9d32956252b/openai_agents-0.17.6.tar.gz", hash = "sha256:fed94f8cf0eb4c57c63a89ad4b107932d75f2a0b6d9e895c88fa3c217e63c822", size = 5426870, upload-time = "2026-06-19T06:04:11.635Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/ea/a8cae2dadf798f369be5f9cb544a169f5f6aecc096a80f1a209dddc4c00f/openai_agents-0.19.4.tar.gz", hash = "sha256:fe21778ee1e8216c9cdb775fa86d11b08be68c0184e14023993088d3f812c0be", size = 5784063, upload-time = "2026-08-05T02:59:12.939Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/39/c415599b5145a05d34089a1c9c9ec71dc5474027bbc63982cd6a9a242a0a/openai_agents-0.17.6-py3-none-any.whl", hash = "sha256:9f6bba61ac3ba2ecedd0a3ed1dd1c72d667b7637b884ecd1c2800ff6576a7ac8", size = 850769, upload-time = "2026-06-19T06:04:09.102Z" },
+    { url = "https://files.pythonhosted.org/packages/90/d8/98925e1e4888e58d7694ba71af2ba93b94540f481c45ee8b7f7be7e30fcd/openai_agents-0.19.4-py3-none-any.whl", hash = "sha256:12e0372fae9698fe6f78e05aaeb4ccdb229602f7ef99b8195a7d68dc82869f51", size = 968498, upload-time = "2026-08-05T02:59:11.191Z" },
 ]
 
 [package.optional-dependencies]
@@ -661,7 +648,6 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiosqlite" },
-    { name = "griffe" },
     { name = "numpy" },
     { name = "openai" },
     { name = "openai-agents", extra = ["viz", "voice"] },
@@ -676,10 +662,9 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aiosqlite", specifier = "==0.22.1" },
-    { name = "griffe", specifier = "==1.15.0" },
     { name = "numpy", specifier = "==2.4.4" },
-    { name = "openai", specifier = "==2.43.0" },
-    { name = "openai-agents", extras = ["viz", "voice"], specifier = ">=0.17.6" },
+    { name = "openai", specifier = ">=2.45.0" },
+    { name = "openai-agents", extras = ["viz", "voice"], specifier = ">=0.19.4" },
     { name = "pydantic", specifier = "==2.12.5" },
     { name = "pydantic-settings", specifier = "==2.9.1" },
     { name = "python-dotenv", specifier = "==1.1.0" },
@@ -1104,18 +1089,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/87/d7/0535a28b1f5f24f6612fb3ff1e89fb1a8d160fee0f976e0aa6803862134b/tqdm-4.68.3.tar.gz", hash = "sha256:00dfa48452b6b6cfae3dd9885636c23d3422d1ec97c66d96818cbd5e0821d482", size = 170596, upload-time = "2026-06-17T07:36:52.105Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d8/8e/bb97bb0c71802080bfc8952937d174e49cfc50de5c951dd47b2496f0dcdb/tqdm-4.68.3-py3-none-any.whl", hash = "sha256:39832cc2def2789a6f29df83f172db7416cea70052c0907a57801c5f2fdccb03", size = 78337, upload-time = "2026-06-17T07:36:50.132Z" },
-]
-
-[[package]]
-name = "types-requests"
-version = "2.33.0.20260518"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "urllib3" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e0/01/c5a19253fe1ac159159ddf9a3a07cec8bb5e486ec4d9002ad2821da0e5d2/types_requests-2.33.0.20260518.tar.gz", hash = "sha256:df7bd3bfe0ca8402dfb841e7d9be714bb5578203283d66d7dc4ef69343449a5e", size = 24752, upload-time = "2026-05-18T06:07:37.966Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1c/bc/b139710a3b6018f7fb2b9508b35c8af564e61bf2bf4fa619d088f3e16f85/types_requests-2.33.0.20260518-py3-none-any.whl", hash = "sha256:626d697d1adaaff76e2044dc8c5c051d8f21abc157bdfe204a75558076fe0bf0", size = 21391, upload-time = "2026-05-18T06:07:37.044Z" },
 ]
 
 [[package]]

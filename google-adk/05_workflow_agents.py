@@ -27,6 +27,11 @@ https://google.github.io/adk-docs/agents/workflow-agents/
 -------------------------------------------------------
 """
 
+# Note: since ADK 2.6.x all three classes below emit a DeprecationWarning naming
+# `Workflow` as their successor. They still work, and they remain the most direct
+# way to show the three orchestration shapes. See 21_workflow_graphs.py for the
+# same patterns expressed as a Workflow graph.
+
 
 # ----------------------------------------------------------------
 #                    1. Sequential Agent

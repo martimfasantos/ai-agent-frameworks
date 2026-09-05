@@ -2,7 +2,7 @@
 
 - Repo: https://github.com/crewAIInc/crewAI
 - Documentation: https://docs.crewai.com/
-- Version: **1.14.7**
+- Version: **1.15.11**
 
 ## About CrewAI
 
@@ -17,9 +17,11 @@ Key features:
 - **Knowledge sources** - String, file, and web-based knowledge per agent or crew
 - **Flows** - Event-driven workflow orchestration with `@start`, `@listen`, `@router`
 - **Planning** - Automatic step-by-step plan generation before execution
-- **Streaming** - Real-time LLM output streaming with event listeners
+- **Streaming** - Real-time LLM output streaming, plus the `StreamFrame` protocol with per-channel projections
 - **MCP integration** - Model Context Protocol server connections
 - **Execution hooks** - `@before_llm_call`, `@after_llm_call`, `@before_tool_call`, `@after_tool_call`
+- **Interception hooks** - `@on(InterceptionPoint....)` over ten points, with `HookAborted` to stop a run
+- **Tool failure reporting** - `ToolFailure` from a tool plus `ToolFailurePolicy` (ignore / warn / raise)
 - **Multimodal agents** - Image and file processing with `multimodal=True`
 - **Human feedback** - `@human_feedback` decorator for human-in-the-loop flows
 - **Checkpointing & forking** - Save execution state, resume after failures, fork for "what if" exploration
@@ -73,6 +75,11 @@ uv run python 20_flows_with_agents.py
 uv run python 21_human_feedback_in_flows.py
 uv run python 22_crew_simplification.py
 uv run python 23_checkpointing.py
+uv run python 24_llm_guardrails.py
+uv run python 25_a2a_protocol.py
+uv run python 26_interception_hooks.py
+uv run python 27_frame_streaming.py
+uv run python 28_tool_failures.py
 ```
 
 ## Examples
@@ -82,30 +89,36 @@ uv run python 23_checkpointing.py
 | 0 | `00_hello_world.py` | Basic agent, task, crew |
 | 1 | `01_agent_kickoff.py` | Agent kickoff without crew, response_format |
 | 2 | `02_tools.py` | Custom tools (@tool, BaseTool, built-in) |
-| 3 | `03_built_in_tools.py` | Built-in crewai_tools (web, file, code) |
+| 3 | `03_built_in_tools.py` | Built-in crewai_tools (web, file, WaitTool) |
 | 4 | `04_structured_outputs.py` | Pydantic structured outputs (LLM + task) |
 | 5 | `05_tasks.py` | Tasks (async, context, output_pydantic, markdown) |
 | 6 | `06_conditional_tasks.py` | ConditionalTask with condition function |
 | 7 | `07_guardrails.py` | Task guardrails (single + chained) |
 | 8 | `08_callbacks.py` | Task callbacks for post-processing |
-| 9 | `09_streaming.py` | LLM streaming with event listener |
+| 9 | `09_streaming.py` | LLM streaming with event listener (older surface, see 27) |
 | 10 | `10_memory.py` | Memory system (short-term, long-term, entity) |
 | 11 | `11_reasoning.py` | Agent reasoning with max_reasoning_attempts |
 | 12 | `12_knowledge.py` | Knowledge sources (string, docling, crew-wide) |
 | 13 | `13_multimodal_agents.py` | Multimodal agents (image analysis) |
 | 14 | `14_multi_agent_collaboration.py` | Delegation, sequential and hierarchical process |
-| 15 | `15_mcp_integration.py` | MCP server integration (DSL syntax) |
+| 15 | `15_mcp_integration.py` | MCP server integration (MCPServerAdapter over stdio) |
 | 16 | `16_planning.py` | Crew planning mode |
-| 17 | `17_event_listeners.py` | Custom event listeners (BaseEventListener) |
-| 18 | `18_execution_hooks.py` | LLM and tool call hooks |
+| 17 | `17_event_listeners.py` | Custom event listeners (BaseEventListener), FlowFailedEvent |
+| 18 | `18_execution_hooks.py` | LLM and tool call hooks (legacy decorators) |
 | 19 | `19_flows.py` | Flows (@start, @listen, @router, and_, or_) |
 | 20 | `20_flows_with_agents.py` | Flows with integrated agents and async |
 | 21 | `21_human_feedback_in_flows.py` | @human_feedback decorator in flows |
 | 22 | `22_crew_simplification.py` | @CrewBase decorators, YAML config |
 | 23 | `23_checkpointing.py` | Checkpointing, resume, fork, CheckpointConfig |
+| 24 | `24_llm_guardrails.py` | LLMGuardrail with natural language criteria |
+| 25 | `25_a2a_protocol.py` | A2A protocol (A2AClientConfig, A2AServerConfig) |
+| 26 | `26_interception_hooks.py` | `@on(InterceptionPoint....)`, boundary and step points, HookAborted |
+| 27 | `27_frame_streaming.py` | StreamFrame protocol, `stream_events()`, channel projections |
+| 28 | `28_tool_failures.py` | ToolFailure, ToolFailurePolicy, `result.tool_failures` |
 
 ## Key dependencies
 
-- `crewai[tools]>=1.14.7` - CrewAI framework with built-in tools
+- `crewai[tools]>=1.15.11` - CrewAI framework with built-in tools
+- `crewai-tools[mcp]>=1.15.11` - MCP adapter support (`mcpadapt`) for `15_mcp_integration.py`
 - `pydantic>=2.11.7` - Data validation and structured outputs
 - `pydantic-settings>=2.10.1` - Settings management from .env
